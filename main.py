@@ -6,8 +6,12 @@ from aiogram.client.default import DefaultBotProperties
 from dotenv import load_dotenv
 
 from handlers import start, dl_partner
+from models import Base, engine
 
 load_dotenv()
+
+# Инициализация базы данных
+Base.metadata.create_all(bind=engine)
 
 # Используем DefaultBotProperties для настройки parse_mode
 bot = Bot(
