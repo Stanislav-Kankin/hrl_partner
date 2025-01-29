@@ -5,7 +5,7 @@ from aiogram.fsm.storage.memory import MemoryStorage
 from aiogram.client.default import DefaultBotProperties
 from dotenv import load_dotenv
 import logging
-from handlers import start, dl_partner
+from handlers import start, dl_partner, my_dl
 from models import Base, engine
 
 load_dotenv()
@@ -27,11 +27,10 @@ dp = Dispatcher(storage=storage)
 # Регистрация обработчиков
 dp.include_router(start.router)
 dp.include_router(dl_partner.router)
-
+dp.include_router(my_dl.router)
 
 async def main():
     await dp.start_polling(bot)
-
 
 if __name__ == "__main__":
     import asyncio

@@ -87,3 +87,11 @@ class BitrixAPI:
                 'STAGE_ID': 'NEW'
             }
         })
+
+    def get_deal(self, deal_id: str) -> Optional[Dict]:
+        """
+        Получение информации о сделке по её ID.
+        """
+        return self._call_method('crm.deal.get', {
+            'id': deal_id
+        })
