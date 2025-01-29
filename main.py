@@ -4,16 +4,19 @@ from aiogram.enums import ParseMode
 from aiogram.fsm.storage.memory import MemoryStorage
 from aiogram.client.default import DefaultBotProperties
 from dotenv import load_dotenv
-
+import logging
 from handlers import start, dl_partner
 from models import Base, engine
 
 load_dotenv()
 
+# Настройка логов
+logging.basicConfig(level=logging.INFO)
+
 # Инициализация базы данных
 Base.metadata.create_all(bind=engine)
 
-# Используем DefaultBotProperties для настройки parse_mode
+# Инициализация бота
 bot = Bot(
     token=os.getenv("BOT_TOKEN"),
     default=DefaultBotProperties(parse_mode=ParseMode.HTML)
