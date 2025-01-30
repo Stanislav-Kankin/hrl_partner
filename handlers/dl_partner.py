@@ -1,5 +1,8 @@
 from aiogram import Router
-from aiogram.types import Message, WebAppInfo, InlineKeyboardMarkup, InlineKeyboardButton
+from aiogram.types import (
+    Message, WebAppInfo,
+    InlineKeyboardMarkup, InlineKeyboardButton
+    )
 from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
@@ -30,7 +33,11 @@ async def dl_partner_command(message: Message, state: FSMContext):
 
 
 @router.message(DlPartner.waiting_for_partner_id)
-async def process_partner_id(message: Message, state: FSMContext, partner_id=None):
+async def process_partner_id(
+        message: Message,
+        state: FSMContext,
+        partner_id=None
+        ):
     if not partner_id:
         partner_id = message.text
         user_id = message.from_user.id
@@ -54,7 +61,12 @@ async def process_partner_id(message: Message, state: FSMContext, partner_id=Non
         partner_link = PARTNERS[partner_id]
         web_app_info = WebAppInfo(url=partner_link)
         keyboard = InlineKeyboardMarkup(
-            inline_keyboard=[[InlineKeyboardButton(text="Заполнить форму", web_app=web_app_info)]]
+            inline_keyboard=[
+                [
+                    InlineKeyboardButton(
+                        text="Заполнить форму", web_app=web_app_info
+                        )]
+                ]
         )
         await message.answer(
             "Заполните форму, нажмите на приложение в кнопке ниже:",
