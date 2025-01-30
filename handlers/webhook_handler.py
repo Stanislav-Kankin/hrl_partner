@@ -1,5 +1,7 @@
 from aiogram import Bot, Dispatcher, types
-from aiogram.webhook.aiohttp_server import SimpleRequestHandler, setup_application
+from aiogram.webhook.aiohttp_server import (
+    SimpleRequestHandler, setup_application
+    )
 from aiohttp import web
 import os
 import logging
@@ -14,6 +16,7 @@ logging.basicConfig(level=logging.INFO)
 bot = Bot(token=os.getenv("BOT_TOKEN"))
 dp = Dispatcher()
 
+
 # Обработчик вебхука
 @dp.message_handler(content_types=['text'])
 async def handle_webhook(message: types.Message):
@@ -26,17 +29,24 @@ async def handle_webhook(message: types.Message):
     user_id = message.from_user.id
 
     # Отправляем сообщение пользователю
-    await bot.send_message(user_id, f"Спасибо за ваш запрос! Мы проверим список клиентов и свяжемся с вами по результатам.\nНомер запроса - {deal_id}\n\nКоманда HRlink")
+    await bot.send_message(
+        user_id,
+        "Спасибо за ваш запрос! Мы проверим список клиентов "
+        "и свяжемся с вами по результатам.\n"
+        f"Номер запроса - {deal_id}\n\nКоманда HRlink")
+
 
 # Запуск вебхука
 async def on_startup(dp):
     await bot.set_webhook(os.getenv("WEBHOOK_URL"))
+
 
 async def on_shutdown(dp):
     logging.warning('Shutting down..')
     await bot.delete_webhook()
     await dp.storage.close()
     await dp.storage.wait_closed()
+
 
 if __name__ == '__main__':
     app = web.Application()

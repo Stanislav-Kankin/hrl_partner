@@ -7,8 +7,10 @@ from services.database import get_db, get_partner_id
 
 router = Router()
 
+
 class DlPartner(StatesGroup):
     waiting_for_partner_id = State()
+
 
 @router.message(Command("start"))
 async def start_command(message: Message, state: FSMContext):
@@ -18,7 +20,12 @@ async def start_command(message: Message, state: FSMContext):
     # Проверяем, есть ли партнер в базе данных
     partner_id = get_partner_id(db, user_id)
     if partner_id:
-        await message.answer("Привет! Я бот для работы с партнерами. Используйте /dl_partner для начала.")
+        await message.answer(
+            "Привет! Я бот для работы с партнерами. "
+            "Используйте /dl_partner для начала."
+            )
     else:
-        await message.answer("Привет! Я бот для работы с партнерами. Введите Ваш ID партнёра:")
+        await message.answer(
+            "Привет! Я бот для работы с партнерами. "
+            "Введите Ваш ID партнёра:")
         await state.set_state(DlPartner.waiting_for_partner_id)

@@ -29,8 +29,10 @@ dp.include_router(start.router)
 dp.include_router(dl_partner.router)
 dp.include_router(my_dl.router)
 
+
 async def main():
     await dp.start_polling(bot)
+
 
 if __name__ == "__main__":
     import asyncio
