@@ -59,7 +59,9 @@ class BitrixAPI:
             'select': ['ID', 'TITLE']
         })
 
-    def create_lead(self, title: str, contact_id: str, inn: str) -> Optional[Dict]:
+    def create_lead(
+            self, title: str, contact_id: str, inn: str
+            ) -> Optional[Dict]:
         """
         Создание лида в Bitrix24.
         """
@@ -74,7 +76,9 @@ class BitrixAPI:
             }
         })
 
-    def create_deal(self, title: str, contact_id: str, inn: str) -> Optional[Dict]:
+    def create_deal(
+            self, title: str, contact_id: str, inn: str
+            ) -> Optional[Dict]:
         """
         Создание сделки в Bitrix24.
         """
