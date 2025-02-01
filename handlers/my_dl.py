@@ -37,7 +37,9 @@ async def process_deal_id(message: Message, state: FSMContext):
                     deal_info['ID']
                     }\nНазвание: {
                         deal_info['TITLE']
-                        }\nСтатус: {deal_info['STAGE_ID']}")
+                        }\nСтатус: {
+                            deal_info['STAGE_ID']
+                            }")
         else:
             logging.error(f"Unexpected response structure: {deal_data}")
             await message.answer(
