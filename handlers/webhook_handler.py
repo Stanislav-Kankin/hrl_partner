@@ -1,12 +1,12 @@
-from aiogram import Bot, Dispatcher, types
-from aiogram.webhook.aiohttp_server import SimpleRequestHandler, setup_application
+from aiogram import Bot, Dispatcher
+from aiogram.webhook.aiohttp_server import (
+    SimpleRequestHandler, setup_application
+    )
 from aiohttp import web
-import os
 import logging
+import os
 from dotenv import load_dotenv
 from aiogram import Router
-from aiogram.filters import Command
-from aiogram.types import Message
 
 load_dotenv()
 
@@ -17,27 +17,29 @@ logging.basicConfig(level=logging.INFO)
 bot = Bot(token=os.getenv("BOT_TOKEN"))
 dp = Dispatcher()
 
-# Создание роутера
 router = Router()
 
 
 # Обработчик вебхука
-@router.message(Command("webhook"))
-async def handle_webhook(message: Message):
-    # Проверяем, что сообщение пришло от Bitrix24
-    if message.from_user.is_bot:
-        return
+@router.post("/webhook")
+async def handle_webhook(request: web.Request):
+    try:
+        data = await request.json()  # Получаем данные от Bitrix24
+        logging.info(f"Received webhook data: {data}")
 
-    # Извлекаем данные из сообщения
-    deal_id = message.text.split('-')[1].strip()
-    user_id = message.from_user.id
+        # Пример обработки данных
+        if data.get("event") == "ONCRMDEALUPDATE":
+            deal_id = data.get("data", {}).get("FIELDS", {}).get("ID")
+            if deal_id:
+                await bot.send_message(
+                    chat_id=os.getenv("ADMIN_CHAT_ID"),  # Замените на ID чата
+                    text=f"Сделка {deal_id} была обновлена."
+                )
 
-    # Отправляем сообщение пользователю
-    await bot.send_message(
-        user_id,
-        "Спасибо за ваш запрос! Мы проверим список клиентов "
-        "и свяжемся с вами по результатам.\n"
-        f"Номер запроса - {deal_id}\n\nКоманда HRlink")
+        return web.Response(status=200)
+    except Exception as e:
+        logging.error(f"Error handling webhook: {e}")
+        return web.Response(status=500)
 
 
 # Запуск вебхука
