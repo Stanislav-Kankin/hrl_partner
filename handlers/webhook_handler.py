@@ -1,11 +1,12 @@
 from aiogram import Bot, Dispatcher, types
-from aiogram.webhook.aiohttp_server import (
-    SimpleRequestHandler, setup_application
-    )
+from aiogram.webhook.aiohttp_server import SimpleRequestHandler, setup_application
 from aiohttp import web
 import os
 import logging
 from dotenv import load_dotenv
+from aiogram import Router
+from aiogram.filters import Command
+from aiogram.types import Message
 
 load_dotenv()
 
@@ -16,10 +17,13 @@ logging.basicConfig(level=logging.INFO)
 bot = Bot(token=os.getenv("BOT_TOKEN"))
 dp = Dispatcher()
 
+# Создание роутера
+router = Router()
+
 
 # Обработчик вебхука
-@dp.message_handler(content_types=['text'])
-async def handle_webhook(message: types.Message):
+@router.message(Command("webhook"))
+async def handle_webhook(message: Message):
     # Проверяем, что сообщение пришло от Bitrix24
     if message.from_user.is_bot:
         return
@@ -38,7 +42,7 @@ async def handle_webhook(message: types.Message):
 
 # Запуск вебхука
 async def on_startup(dp):
-    await bot.set_webhook(os.getenv("https://308144.hosted-by.xorek.cloud/webhook."))
+    await bot.set_webhook(os.getenv("WEBHOOK_URL"))
 
 
 async def on_shutdown(dp):
