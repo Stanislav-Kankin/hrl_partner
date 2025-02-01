@@ -1,12 +1,11 @@
 from aiogram import Bot, Dispatcher
 from aiogram.webhook.aiohttp_server import (
     SimpleRequestHandler, setup_application
-    )
+)
 from aiohttp import web
 import logging
 import os
 from dotenv import load_dotenv
-from aiogram import Router
 
 load_dotenv()
 
@@ -17,11 +16,8 @@ logging.basicConfig(level=logging.INFO)
 bot = Bot(token=os.getenv("BOT_TOKEN"))
 dp = Dispatcher()
 
-router = Router()
-
 
 # Обработчик вебхука
-@router.post("/webhook")
 async def handle_webhook(request: web.Request):
     try:
         data = await request.json()  # Получаем данные от Bitrix24
@@ -56,6 +52,7 @@ async def on_shutdown(dp):
 
 if __name__ == '__main__':
     app = web.Application()
+    app.router.add_post("/webhook", handle_webhook)
     SimpleRequestHandler(dispatcher=dp, bot=bot).register(app, path="/webhook")
     setup_application(app, dp, bot=bot)
     web.run_app(app, host="0.0.0.0", port=int(os.getenv("PORT", 5000)))
