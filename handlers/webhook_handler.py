@@ -38,7 +38,7 @@ async def handle_webhook(message: types.Message):
 
 # Запуск вебхука
 async def on_startup(dp):
-    await bot.set_webhook(os.getenv("WEBHOOK_URL"))
+    await bot.set_webhook(os.getenv("https://308144.hosted-by.xorek.cloud/webhook."))
 
 
 async def on_shutdown(dp):
