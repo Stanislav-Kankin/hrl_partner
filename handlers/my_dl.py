@@ -9,13 +9,16 @@ import logging
 
 router = Router()
 
+
 class MyDealReg(StatesGroup):
     waiting_for_deal_id = State()
+
 
 @router.message(Command("my_dl"))
 async def my_dl_command(message: Message, state: FSMContext):
     await message.answer("Введите интересующий вас номер DealReg:")
     await state.set_state(MyDealReg.waiting_for_deal_id)
+
 
 @router.message(MyDealReg.waiting_for_deal_id)
 async def process_deal_id(message: Message, state: FSMContext):
@@ -29,17 +32,9 @@ async def process_deal_id(message: Message, state: FSMContext):
         result = deal_data['result']
         if isinstance(result, list) and len(result) > 0:
             deal_info = result[0]
-            deal_message = (
-                f"Информация о сделке:\n"
-                f"Номер: {deal_info['ID']}\n"
-                f"Название: {deal_info['TITLE']}\n"
-                f"Статус: {deal_info['STAGE_ID']}\n"
-                f"Сумма: {deal_info.get('OPPORTUNITY', 'Не указано')}\n"
-                f"Контакт: {deal_info.get('CONTACT_ID', 'Не указано')}\n"
-                f"Компания: {deal_info.get('COMPANY_ID', 'Не указано')}\n"
-                f"Дата создания: {deal_info.get('DATE_CREATE', 'Не указано')}\n"
-                f"Дата изменения: {deal_info.get('DATE_MODIFY', 'Не указано')}\n"
-            )
+            # Выводим все данные для анализа
+            deal_message = f"Полные данные сделки:\n{deal_info}"
+            print(deal_data)
             await message.answer(deal_message)
         else:
             logging.error(f"Unexpected response structure: {deal_data}")
