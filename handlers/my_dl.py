@@ -32,9 +32,21 @@ async def process_deal_id(message: Message, state: FSMContext):
         result = deal_data['result']
         if isinstance(result, list) and len(result) > 0:
             deal_info = result[0]
-            # Выводим все данные для анализа
-            deal_message = f"Полные данные сделки:\n{deal_info}"
-            print(deal_data)
+            # Фильтруем только нужные поля
+            deal_message = (
+                f"Информация о сделке:\n"
+                f"Номер: {deal_info['ID']}\n"
+                f"Название: {deal_info['TITLE']}\n"
+                f"Статус: {deal_info['STAGE_ID']}\n"
+                f"Сумма: {deal_info.get('OPPORTUNITY', 'Не указано')}\n"
+                f"Контакт: {deal_info.get('CONTACT_ID', 'Не указано')}\n"
+                f"Компания: {deal_info.get('COMPANY_ID', 'Не указано')}\n"
+                f"Дата создания: {deal_info.get('DATE_CREATE', 'Не указано')}\n"
+                f"Дата изменения: {deal_info.get('DATE_MODIFY', 'Не указано')}\n"
+                f"Ответственный: {deal_info.get('ASSIGNED_BY_ID', 'Не указано')}\n"
+                f"Тип сделки: {deal_info.get('TYPE_ID', 'Не указано')}\n"
+                f"Источник: {deal_info.get('SOURCE_ID', 'Не указано')}\n"
+            )
             await message.answer(deal_message)
         else:
             logging.error(f"Unexpected response structure: {deal_data}")
