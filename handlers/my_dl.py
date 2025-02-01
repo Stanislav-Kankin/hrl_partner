@@ -32,18 +32,22 @@ async def process_deal_id(message: Message, state: FSMContext):
         result = deal_data['result']
         if isinstance(result, list) and len(result) > 0:
             deal_info = result[0]
-            await message.answer(
-                f"Информация о сделке:\nНомер: {
-                    deal_info['ID']
-                    }\nНазвание: {
-                        deal_info['TITLE']
-                        }\nСтатус: {
-                            deal_info['STAGE_ID']
-                            }")
+            deal_message = (
+                f"Информация о сделке:\n"
+                f"Номер: {deal_info['ID']}\n"
+                f"Название: {deal_info['TITLE']}\n"
+                f"Статус: {deal_info['STAGE_ID']}\n"
+                f"Сумма: {deal_info.get('OPPORTUNITY', 'Не указано')}\n"
+                f"Контакт: {deal_info.get('CONTACT_ID', 'Не указано')}\n"
+                f"Компания: {deal_info.get('COMPANY_ID', 'Не указано')}\n"
+                f"Дата создания: {deal_info.get('DATE_CREATE', 'Не указано')}\n"
+                f"Дата изменения: {deal_info.get('DATE_MODIFY', 'Не указано')}\n"
+            )
+            await message.answer(deal_message)
         else:
             logging.error(f"Unexpected response structure: {deal_data}")
             await message.answer(
                 "Произошла ошибка при получении информации о сделке."
-                )
+            )
 
     await state.clear()
