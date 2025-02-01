@@ -9,16 +9,13 @@ import logging
 
 router = Router()
 
-
 class MyDealReg(StatesGroup):
     waiting_for_deal_id = State()
-
 
 @router.message(Command("my_dl"))
 async def my_dl_command(message: Message, state: FSMContext):
     await message.answer("Введите интересующий вас номер DealReg:")
     await state.set_state(MyDealReg.waiting_for_deal_id)
-
 
 @router.message(MyDealReg.waiting_for_deal_id)
 async def process_deal_id(message: Message, state: FSMContext):
