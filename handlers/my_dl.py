@@ -32,7 +32,6 @@ async def process_deal_id(message: Message, state: FSMContext):
         result = deal_data['result']
         if isinstance(result, list) and len(result) > 0:
             deal_info = result[0]
-            # Фильтруем только нужные поля
             deal_message = (
                 f"Информация о сделке:\n"
                 f"Номер: {deal_info['ID']}\n"
