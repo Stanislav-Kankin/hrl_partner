@@ -5,16 +5,12 @@ from aiogram.fsm.storage.memory import MemoryStorage
 from aiogram.client.default import DefaultBotProperties
 from dotenv import load_dotenv
 import logging
-from handlers import start, dl_partner, my_dl, webhook_handler
-from models import Base, engine
+from handlers import start, dl_partner, my_dl
 
 load_dotenv()
 
 # Настройка логов
 logging.basicConfig(level=logging.INFO)
-
-# Инициализация базы данных
-Base.metadata.create_all(bind=engine)
 
 # Инициализация бота
 bot = Bot(
@@ -28,7 +24,6 @@ dp = Dispatcher(storage=storage)
 dp.include_router(start.router)
 dp.include_router(dl_partner.router)
 dp.include_router(my_dl.router)
-dp.include_router(webhook_handler.router)
 
 
 async def main():

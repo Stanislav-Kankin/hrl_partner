@@ -30,7 +30,7 @@ async def process_deal_id(message: Message, state: FSMContext):
         await message.answer("Сделка с таким номером не найдена.")
     else:
         result = deal_data['result']
-        if isinstance(result, dict):  # Проверяем, что результат — это словарь
+        if isinstance(result, dict):
             deal_info = result
             deal_message = (
                 f"Информация о сделке:\n"
