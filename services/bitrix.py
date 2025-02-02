@@ -32,70 +32,10 @@ class BitrixAPI:
             logger.error(f"Request to Bitrix24 failed: {e}")
             return None
 
-    def get_contact(
-            self, phone: Optional[str] = None,
-            email: Optional[str] = None,
-            partner_id: Optional[str] = None
-            ) -> Optional[Dict]:
-        """
-        Поиск контакта по телефону, email или partner_id.
-        """
-        filter_params = {}
-        if phone: filter_params['PHONE'] = phone
-        if email: filter_params['EMAIL'] = email
-        if partner_id: filter_params['UF_PARTNER_ID'] = partner_id
-
-        return self._call_method('crm.contact.list', {
-            'filter': filter_params,
-            'select': ['ID', 'NAME', 'UF_PARTNER_ID']
-        })
-
-    def check_inn(self, inn: str) -> Optional[Dict]:
-        """
-        Проверка ИНН в компаниях.
-        """
-        return self._call_method('crm.company.list', {
-            'filter': {'UF_INN': inn},
-            'select': ['ID', 'TITLE']
-        })
-
-    def create_lead(
-            self, title: str, contact_id: str, inn: str
-            ) -> Optional[Dict]:
-        """
-        Создание лида в Bitrix24.
-        """
-        return self._call_method('crm.lead.add', {
-            'fields': {
-                'TITLE': title,
-                'NAME': f"Заявка от партнера {contact_id}",
-                'STATUS_ID': 'NEW',
-                'SOURCE_ID': 'PARTNER_BOT',
-                'UF_CRM_INN': inn,
-                'CONTACT_ID': contact_id
-            }
-        })
-
-    def create_deal(
-            self, title: str, contact_id: str, inn: str
-            ) -> Optional[Dict]:
-        """
-        Создание сделки в Bitrix24.
-        """
-        return self._call_method('crm.deal.add', {
-            'fields': {
-                'TITLE': title,
-                'TYPE_ID': 'SALE',
-                'CONTACT_ID': contact_id,
-                'UF_CRM_INN': inn,
-                'STAGE_ID': 'NEW'
-            }
-        })
-
     def get_deal(self, deal_id: str) -> Optional[Dict]:
         """
         Получение информации о сделке по её ID.
         """
-        return self._call_method('crm.deal.get', {
-            'id': deal_id
-        })
+        response = self._call_method('crm.deal.get', {'id': deal_id})
+        logger.info(f"Bitrix24 API Response: {response}")
+        return response
