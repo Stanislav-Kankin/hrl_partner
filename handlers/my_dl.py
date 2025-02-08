@@ -44,6 +44,7 @@ async def process_deal_id(message: Message, state: FSMContext):
                 responsible_name = 'Неизвестно'
                 work_phone = 'Неизвестно'
                 email = 'Неизвестно'
+                position = 'Неизвестно'
                 logger.error(
                     f"Failed to retrieve user data for ID: {responsible_id}")
             else:
@@ -52,6 +53,7 @@ async def process_deal_id(message: Message, state: FSMContext):
                     user_info.get('LAST_NAME', 'Неизвестно')}"
                 work_phone = user_info.get('WORK_PHONE', 'Неизвестно')
                 email = user_info.get('EMAIL', 'Неизвестно')
+                position = user_info.get('WORK_POSITION', 'Неизвестно')
 
             # Форматирование даты и времени
             date_create = datetime.fromisoformat(
@@ -65,20 +67,20 @@ async def process_deal_id(message: Message, state: FSMContext):
 
             deal_message = (
                 f"<b>Информация о сделке:</b>\n"
-                f"Номер: {deal_info.get('ID', 'Не указано')}\n"
-                f"Название: {deal_info.get('TITLE', 'Не указано')}\n"
-                f"Статус: {deal_info.get('STAGE_ID', 'Не указано')}\n"
-                f"Сумма: {deal_info.get('OPPORTUNITY', 'Не указано')} руб.\n"
-                f"Компания: {deal_info.get('COMPANY_ID', 'Не указано')}\n"
-                f"Дата создания: {date_create}\n"
-                f"Дата изменения: {date_modify}\n"
-                f"Ответственный: {responsible_name}\n"
-                f"ID ответственного: {responsible_id}\n"
-                f"Рабочий телефон: {work_phone}\n"
-                f"Почта сотрудника: {email}\n"
-                f"Дата последнего касания: {last_activity_date}\n"
-                f"Контакт: {deal_info.get('CONTACT_ID', 'Не указано')}\n"
-                f"Закрыта: {
+                f"<b>Номер:</b> {deal_info.get('ID', 'Не указано')}\n"
+                f"<b>Название:</b> {deal_info.get('TITLE', 'Не указано')}\n"
+                f"<b>Статус:</b> {deal_info.get('STAGE_ID', 'Не указано')}\n"
+                f"<b>Компания</b>: {deal_info.get('COMPANY_ID', 'Не указано')}\n"
+                f"<b>ID ответственного</b>: {responsible_id}\n"
+                f"<b>Дата создания:</b> {date_create}\n"
+                f"<b>Дата изменения:</b> {date_modify}\n"
+                f"<b>Ответственный:</b> {responsible_name}\n"
+                f"<b>Должность:</b> {position}\n"
+                f"<b>Рабочий телефон:<b> <code>{work_phone}</code>\n"
+                f"<b>Почта сотрудника:</b> <code>{email}</code>\n"
+                f"<b>Дата последнего касания: <u>{last_activity_date}</u></b>\n"
+                f"<b>Контакт:</b> {deal_info.get('CONTACT_ID', 'Не указано')}\n"
+                f"<b>Закрыта:</b> {
                     'Да' if deal_info.get('CLOSED') == 'Y' else 'Нет'}\n"
             )
             await message.answer(deal_message, parse_mode=ParseMode.HTML)
