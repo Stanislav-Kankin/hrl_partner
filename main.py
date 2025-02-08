@@ -10,7 +10,6 @@ from datetime import datetime
 
 router = Router()
 
-
 class MyDealReg(StatesGroup):
     waiting_for_deal_id = State()
 
