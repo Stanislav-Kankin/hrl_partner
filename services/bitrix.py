@@ -1,6 +1,5 @@
 import requests
 import logging
-import os
 from typing import Optional, Dict, Any
 
 logger = logging.getLogger(__name__)
@@ -19,6 +18,8 @@ class BitrixAPI:
         url = f"{self.webhook_base_url}/{method}"
         try:
             response = requests.post(url, json=params or {})
+            logger.info(f"Bitrix24 API Request URL: {url}")
+            logger.info(f"Bitrix24 API Request Params: {params}")
             response.raise_for_status()
             data = response.json()
 
