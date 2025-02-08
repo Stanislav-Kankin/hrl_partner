@@ -70,7 +70,8 @@ async def process_deal_id(message: Message, state: FSMContext):
                 f"<b>Номер:</b> {deal_info.get('ID', 'Не указано')}\n"
                 f"<b>Название:</b> {deal_info.get('TITLE', 'Не указано')}\n"
                 f"<b>Статус:</b> {deal_info.get('STAGE_ID', 'Не указано')}\n"
-                f"<b>Компания</b>: {deal_info.get('COMPANY_ID', 'Не указано')}\n"
+                f"<b>Компания</b>: {
+                    deal_info.get('COMPANY_ID', 'Не указано')}\n"
                 f"<b>ID ответственного</b>: {responsible_id}\n"
                 f"<b>Дата создания:</b> {date_create}\n"
                 f"<b>Дата изменения:</b> {date_modify}\n"
@@ -78,8 +79,10 @@ async def process_deal_id(message: Message, state: FSMContext):
                 f"<b>Должность:</b> {position}\n"
                 f"<b>Рабочий телефон:</b> <code>{work_phone}</code>\n"
                 f"<b>Почта сотрудника:</b> <code>{email}</code>\n"
-                f"<b>Дата последнего касания: <u>{last_activity_date}</u></b>\n"
-                f"<b>Контакт:</b> {deal_info.get('CONTACT_ID', 'Не указано')}\n"
+                f"<b>Дата последнего касания: <u>{
+                    last_activity_date}</u></b>\n"
+                f"<b>Контакт:</b> {
+                    deal_info.get('CONTACT_ID', 'Не указано')}\n"
                 f"<b>Закрыта:</b> {
                     'Да' if deal_info.get('CLOSED') == 'Y' else 'Нет'}\n"
             )

@@ -9,7 +9,11 @@ class BitrixAPI:
     def __init__(self, webhook_base_url: str):
         self.webhook_base_url = webhook_base_url
 
-    async def _call_method(self, method: str, params: Optional[Dict] = None) -> Optional[Dict[str, Any]]:
+    async def _call_method(
+            self,
+            method: str,
+            params: Optional[Dict] = None
+            ) -> Optional[Dict[str, Any]]:
         url = f"{self.webhook_base_url}/{method}"
         logger.info(f"Request URL: {url}")
         logger.info(f"Request Params: {params}")
@@ -18,9 +22,13 @@ class BitrixAPI:
             try:
                 async with session.post(url, json=params or {}) as response:
                     data = await response.json()
-                    logger.info(f"API Response: {data}")  # Логируем полный ответ
+                    logger.info(f"API Response: {data}")
                     if 'error' in data:
-                        logger.error(f"API Error: {data.get('error_description', 'Unknown error')}")
+                        logger.error(
+                            f"API Error: {data.get(
+                                'error_description', 'Unknown error'
+                                )}"
+                            )
                         return None
                     return data
             except aiohttp.ClientError as e:
