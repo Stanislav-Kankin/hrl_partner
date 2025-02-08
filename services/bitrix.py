@@ -18,6 +18,7 @@ class BitrixAPI:
             try:
                 async with session.post(url, json=params or {}) as response:
                     data = await response.json()
+                    logger.info(f"API Response: {data}")  # Логируем полный ответ
                     if 'error' in data:
                         logger.error(f"API Error: {data.get('error_description', 'Unknown error')}")
                         return None
