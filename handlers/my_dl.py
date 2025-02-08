@@ -76,7 +76,7 @@ async def process_deal_id(message: Message, state: FSMContext):
                 f"<b>Дата изменения:</b> {date_modify}\n"
                 f"<b>Ответственный:</b> {responsible_name}\n"
                 f"<b>Должность:</b> {position}\n"
-                f"<b>Рабочий телефон:<b> <code>{work_phone}</code>\n"
+                f"<b>Рабочий телефон:</b> <code>{work_phone}</code>\n"
                 f"<b>Почта сотрудника:</b> <code>{email}</code>\n"
                 f"<b>Дата последнего касания: <u>{last_activity_date}</u></b>\n"
                 f"<b>Контакт:</b> {deal_info.get('CONTACT_ID', 'Не указано')}\n"
