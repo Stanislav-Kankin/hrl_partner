@@ -6,6 +6,7 @@ from aiogram.fsm.state import State, StatesGroup
 from services.bitrix import BitrixAPI
 import os
 import logging
+from datetime import datetime
 
 router = Router()
 
@@ -24,7 +25,7 @@ async def my_dl_command(message: Message, state: FSMContext):
 async def process_deal_id(message: Message, state: FSMContext):
     deal_id = message.text
     bitrix = BitrixAPI(os.getenv("BITRIX_WEBHOOK"))
-    deal_data = bitrix.get_deal(deal_id=deal_id)
+    deal_data = await bitrix.get_deal(deal_id=deal_id)
 
     if not deal_data or not deal_data.get('result'):
         await message.answer("Сделка с таким номером не найдена.")
@@ -32,16 +33,24 @@ async def process_deal_id(message: Message, state: FSMContext):
         result = deal_data['result']
         if isinstance(result, dict):  # Проверяем, что результат — это словарь
             deal_info = result
+
+            # Форматирование даты и времени
+            date_create = datetime.fromisoformat(deal_info.get('DATE_CREATE', '')).strftime('%d.%m.%Y %H:%M')
+            date_modify = datetime.fromisoformat(deal_info.get('DATE_MODIFY', '')).strftime('%d.%m.%Y %H:%M')
+
             deal_message = (
                 f"Информация о сделке:\n"
                 f"Номер: {deal_info.get('ID', 'Не указано')}\n"
                 f"Название: {deal_info.get('TITLE', 'Не указано')}\n"
                 f"Статус: {deal_info.get('STAGE_ID', 'Не указано')}\n"
-                f"Сумма: {deal_info.get('OPPORTUNITY', 'Не указано')}\n"
-                f"Контакт: {deal_info.get('CONTACT_ID', 'Не указано')}\n"
+                f"Сумма: {deal_info.get('OPPORTUNITY', 'Не указано')} руб.\n"
                 f"Компания: {deal_info.get('COMPANY_ID', 'Не указано')}\n"
-                f"Дата создания: {deal_info.get('DATE_CREATE', 'Не указано')}\n"
+                f"Дата создания: {date_create}\n"
+                f"Дата изменения: {date_modify}\n"
                 f"Ответственный: {deal_info.get('ASSIGNED_BY_ID', 'Не указано')}\n"
+                f"ID ответственного: {deal_info.get('ASSIGNED_BY_ID', 'Не указано')}\n"
+                f"Контакт: {deal_info.get('CONTACT_ID', 'Не указано')}\n"
+                f"Закрыта: {'Да' if deal_info.get('CLOSED') == 'Y' else 'Нет'}\n"
             )
             await message.answer(deal_message)
         else:
