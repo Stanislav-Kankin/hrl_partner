@@ -34,9 +34,18 @@ async def process_deal_id(message: Message, state: FSMContext):
         if isinstance(result, dict):  # Проверяем, что результат — это словарь
             deal_info = result
 
+            responsible_id = deal_info.get('ASSIGNED_BY_ID')
+            user_data = await bitrix.get_user(responsible_id)
+            responsible_name = user_data.get(
+                'result', [{}])[0].get('NAME', 'Неизвестно')
+
             # Форматирование даты и времени
-            date_create = datetime.fromisoformat(deal_info.get('DATE_CREATE', '')).strftime('%d.%m.%Y %H:%M')
-            date_modify = datetime.fromisoformat(deal_info.get('DATE_MODIFY', '')).strftime('%d.%m.%Y %H:%M')
+            date_create = datetime.fromisoformat(
+                deal_info.get('DATE_CREATE', '')
+                ).strftime('%d.%m.%Y %H:%M')
+            date_modify = datetime.fromisoformat(
+                deal_info.get('DATE_MODIFY', '')
+                ).strftime('%d.%m.%Y %H:%M')
 
             deal_message = (
                 f"Информация о сделке:\n"
@@ -47,8 +56,8 @@ async def process_deal_id(message: Message, state: FSMContext):
                 f"Компания: {deal_info.get('COMPANY_ID', 'Не указано')}\n"
                 f"Дата создания: {date_create}\n"
                 f"Дата изменения: {date_modify}\n"
-                f"Ответственный: {deal_info.get('ASSIGNED_BY_ID', 'Не указано')}\n"
-                f"ID ответственного: {deal_info.get('ASSIGNED_BY_ID', 'Не указано')}\n"
+                f"ID ответственного: {responsible_id}\n"
+                f"Ответсвтенный: {responsible_name}\n"
                 f"Контакт: {deal_info.get('CONTACT_ID', 'Не указано')}\n"
                 f"Закрыта: {'Да' if deal_info.get('CLOSED') == 'Y' else 'Нет'}\n"
             )

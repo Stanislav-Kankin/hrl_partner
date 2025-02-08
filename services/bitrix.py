@@ -31,3 +31,7 @@ class BitrixAPI:
         response = await self._call_method('crm.deal.get', {'id': deal_id})
         logger.info(f"API Response: {response}")
         return response
+
+    async def get_user(self, user_id: str) -> Optional[Dict]:
+        response = await self._call_method('user.get', {'ID': user_id})
+        return response
