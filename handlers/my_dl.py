@@ -3,6 +3,7 @@ from aiogram.types import Message
 from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
+from aiogram.enums import ParseMode
 from services.bitrix import BitrixAPI
 import os
 import logging
@@ -43,17 +44,24 @@ async def process_deal_id(message: Message, state: FSMContext):
                 responsible_name = 'Неизвестно'
                 work_phone = 'Неизвестно'
                 email = 'Неизвестно'
-                logger.error(f"Failed to retrieve user data for ID: {responsible_id}")
+                logger.error(
+                    f"Failed to retrieve user data for ID: {responsible_id}")
             else:
                 user_info = user_data.get('result', [{}])[0]
-                responsible_name = f"{user_info.get('NAME', 'Неизвестно')} {user_info.get('LAST_NAME', 'Неизвестно')}"
+                responsible_name = f"{user_info.get('NAME', 'Неизвестно')} {
+                    user_info.get('LAST_NAME', 'Неизвестно')}"
                 work_phone = user_info.get('WORK_PHONE', 'Неизвестно')
                 email = user_info.get('EMAIL', 'Неизвестно')
 
             # Форматирование даты и времени
-            date_create = datetime.fromisoformat(deal_info.get('DATE_CREATE', '')).strftime('%d.%m.%Y %H:%M')
-            date_modify = datetime.fromisoformat(deal_info.get('DATE_MODIFY', '')).strftime('%d.%m.%Y %H:%M')
-            last_activity_date = deal_info.get('LAST_ACTIVITY_TIME', 'Неизвестно')
+            date_create = datetime.fromisoformat(
+                deal_info.get('DATE_CREATE', '')
+                ).strftime('%d.%m.%Y %H:%M')
+            date_modify = datetime.fromisoformat(
+                deal_info.get('DATE_MODIFY', '')
+                ).strftime('%d.%m.%Y %H:%M')
+            last_activity_date = deal_info.get(
+                'LAST_ACTIVITY_TIME', 'Неизвестно')
 
             deal_message = (
                 f"<b>Информация о сделке:</b>\n"
@@ -70,11 +78,13 @@ async def process_deal_id(message: Message, state: FSMContext):
                 f"Почта сотрудника: {email}\n"
                 f"Дата последнего касания: {last_activity_date}\n"
                 f"Контакт: {deal_info.get('CONTACT_ID', 'Не указано')}\n"
-                f"Закрыта: {'Да' if deal_info.get('CLOSED') == 'Y' else 'Нет'}\n"
+                f"Закрыта: {
+                    'Да' if deal_info.get('CLOSED') == 'Y' else 'Нет'}\n"
             )
             await message.answer(deal_message, parse_mode=ParseMode.HTML)
         else:
             logging.error(f"Unexpected response structure: {deal_data}")
-            await message.answer("Произошла ошибка при получении информации о сделке.")
+            await message.answer(
+                "Произошла ошибка при получении информации о сделке.")
 
     await state.clear()
