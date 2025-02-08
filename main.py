@@ -1,35 +1,60 @@
+from aiogram import Router
+from aiogram.types import Message
+from aiogram.filters import Command
+from aiogram.fsm.context import FSMContext
+from aiogram.fsm.state import State, StatesGroup
+from services.bitrix import BitrixAPI
 import os
-from aiogram import Bot, Dispatcher
-from aiogram.enums import ParseMode
-from aiogram.fsm.storage.memory import MemoryStorage
-from aiogram.client.default import DefaultBotProperties
-from dotenv import load_dotenv
 import logging
-from handlers import start, dl_partner, my_dl
+from datetime import datetime
 
-load_dotenv()
-
-# Настройка логов
-logging.basicConfig(level=logging.INFO)
-
-# Инициализация бота
-bot = Bot(
-    token=os.getenv("BOT_TOKEN"),
-    default=DefaultBotProperties(parse_mode=ParseMode.HTML)
-)
-storage = MemoryStorage()
-dp = Dispatcher(storage=storage)
-
-# Регистрация обработчиков
-dp.include_router(start.router)
-dp.include_router(dl_partner.router)
-dp.include_router(my_dl.router)
+router = Router()
 
 
-async def main():
-    await dp.start_polling(bot)
+class MyDealReg(StatesGroup):
+    waiting_for_deal_id = State()
 
 
-if __name__ == "__main__":
-    import asyncio
-    asyncio.run(main())
+@router.message(Command("my_dl"))
+async def my_dl_command(message: Message, state: FSMContext):
+    await message.answer("Введите интересующий вас номер DealReg:")
+    await state.set_state(MyDealReg.waiting_for_deal_id)
+
+
+@router.message(MyDealReg.waiting_for_deal_id)
+async def process_deal_id(message: Message, state: FSMContext):
+    deal_id = message.text
+    bitrix = BitrixAPI(os.getenv("BITRIX_WEBHOOK"))
+    deal_data = await bitrix.get_deal(deal_id=deal_id)
+
+    if not deal_data or not deal_data.get('result'):
+        await message.answer("Сделка с таким номером не найдена.")
+    else:
+        result = deal_data['result']
+        if isinstance(result, dict):  # Проверяем, что результат — это словарь
+            deal_info = result
+
+            # Форматирование даты и времени
+            date_create = datetime.fromisoformat(deal_info.get('DATE_CREATE', '')).strftime('%d.%m.%Y %H:%M')
+            date_modify = datetime.fromisoformat(deal_info.get('DATE_MODIFY', '')).strftime('%d.%m.%Y %H:%M')
+
+            deal_message = (
+                f"Информация о сделке:\n"
+                f"Номер: {deal_info.get('ID', 'Не указано')}\n"
+                f"Название: {deal_info.get('TITLE', 'Не указано')}\n"
+                f"Статус: {deal_info.get('STAGE_ID', 'Не указано')}\n"
+                f"Сумма: {deal_info.get('OPPORTUNITY', 'Не указано')} руб.\n"
+                f"Компания: {deal_info.get('COMPANY_ID', 'Не указано')}\n"
+                f"Дата создания: {date_create}\n"
+                f"Дата изменения: {date_modify}\n"
+                f"Ответственный: {deal_info.get('ASSIGNED_BY_ID', 'Не указано')}\n"
+                f"ID ответственного: {deal_info.get('ASSIGNED_BY_ID', 'Не указано')}\n"
+                f"Контакт: {deal_info.get('CONTACT_ID', 'Не указано')}\n"
+                f"Закрыта: {'Да' if deal_info.get('CLOSED') == 'Y' else 'Нет'}\n"
+            )
+            await message.answer(deal_message)
+        else:
+            logging.error(f"Unexpected response structure: {deal_data}")
+            await message.answer("Произошла ошибка при получении информации о сделке.")
+
+    await state.clear()
