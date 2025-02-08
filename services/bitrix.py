@@ -34,4 +34,6 @@ class BitrixAPI:
 
     async def get_user(self, user_id: str) -> Optional[Dict]:
         response = await self._call_method('user.get', {'ID': user_id})
+        if response is None:
+            logger.error(f"Failed to retrieve user data for ID: {user_id}")
         return response
