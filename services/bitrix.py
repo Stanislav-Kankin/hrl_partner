@@ -45,3 +45,18 @@ class BitrixAPI:
         if response is None:
             logger.error(f"Failed to retrieve user data for ID: {user_id}")
         return response
+
+    async def get_company_info(self, company_id: str) -> Optional[Dict]:
+        response = await self._call_method(
+            'crm.company.get', {'ID': company_id}
+            )
+        return response
+
+    async def get_deal_stage(self, stage_id: str) -> Optional[Dict]:
+        response = await self._call_method('crm.deal.stage.list', {})
+        stage_info = next(
+            (stage for stage in response.get(
+                'result', []
+                ) if stage['STATUS_ID'] == stage_id), {}
+            )
+        return {'result': stage_info}
