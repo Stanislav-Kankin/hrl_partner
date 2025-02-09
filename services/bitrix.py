@@ -53,9 +53,13 @@ class BitrixAPI:
         return response
 
     async def get_deal_stage(self, stage_id: str) -> Optional[Dict]:
-        response = await self._call_method('crm.deal.stage.list', {})
+        response = await self._call_method('crm.status.list', {
+            'filter': {'ENTITY_ID': 'DEAL_STAGE'}, 'select': [
+                'STATUS_ID', 'NAME']})
         if response is None:
             logger.error(f"Failed to retrieve deal stages for ID: {stage_id}")
             return {'result': {}}
-        stage_info = next((stage for stage in response.get('result', []) if stage['STATUS_ID'] == stage_id), {})
+        stage_info = next((
+            stage for stage in response.get(
+                'result', []) if stage['STATUS_ID'] == stage_id), {})
         return {'result': stage_info}
