@@ -49,6 +49,9 @@ async def process_deal_id(message: Message, state: FSMContext):
                 logger.error(f"Failed to retrieve deal stage for ID: {stage_id}")
             else:
                 stage_name = stage_data.get('result', {}).get('NAME', 'Неизвестно')
+                if stage_name == '':
+                    stage_name = 'Неизвестно'
+                    logger.warning(f"Empty stage name retrieved for ID: {stage_id}")
 
             # Получение информации об ответственном
             responsible_id = deal_info.get('ASSIGNED_BY_ID')
