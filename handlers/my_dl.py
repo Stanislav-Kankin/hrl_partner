@@ -53,6 +53,8 @@ async def process_deal_id(message: Message, state: FSMContext):
                     stage_name = 'Неизвестно'
                     logger.warning(f"Empty stage name retrieved for ID: {stage_id}")
 
+            logger.info(f"Deal stage ID: {stage_id}, Stage name: {stage_name}")
+
             # Получение информации об ответственном
             responsible_id = deal_info.get('ASSIGNED_BY_ID')
             user_data = await bitrix.get_user(responsible_id)
