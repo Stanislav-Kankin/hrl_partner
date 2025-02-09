@@ -45,7 +45,13 @@ async def process_deal_id(message: Message, state: FSMContext):
             # Получение информации о статусе сделки
             stage_id = deal_info.get('STAGE_ID')
             stage_data = await bitrix.get_deal_stage(stage_id)
-            stage_name = stage_data.get('result', {}).get('NAME', 'Неизвестно')
+            if not stage_data or not stage_data.get('result'):
+                stage_name = 'Неизвестно'
+                logger.error(
+                    f"Failed to retrieve deal stage for ID: {stage_id}")
+            else:
+                stage_name = stage_data.get('result', {}).get(
+                    'NAME', 'Неизвестно')
 
             # Получение информации об ответственном
             responsible_id = deal_info.get('ASSIGNED_BY_ID')
@@ -56,14 +62,12 @@ async def process_deal_id(message: Message, state: FSMContext):
                 work_phone = 'Неизвестно'
                 email = 'Неизвестно'
                 position = 'Неизвестно'
-                logger.error(
-                    f"Failed to retrieve user data for ID: {responsible_id}"
-                    )
+                logger.error(f"Failed to retrieve user data for ID: {
+                    responsible_id}")
             else:
                 user_info = user_data.get('result', [{}])[0]
-                responsible_name = f"{
-                    user_info.get('NAME', 'Неизвестно')} {
-                        user_info.get('LAST_NAME', 'Неизвестно')}"
+                responsible_name = f"{user_info.get('NAME', 'Неизвестно')} {
+                    user_info.get('LAST_NAME', 'Неизвестно')}"
                 work_phone = user_info.get('WORK_PHONE', 'Неизвестно')
                 email = user_info.get('EMAIL', 'Неизвестно')
                 position = user_info.get('WORK_POSITION', 'Неизвестно')
@@ -100,9 +104,9 @@ async def process_deal_id(message: Message, state: FSMContext):
             )
             await message.answer(deal_message, parse_mode=ParseMode.HTML)
         else:
-            logging.error(f"Unexpected response structure: {deal_data}")
+            logging.error(
+                f"Unexpected response structure: {deal_data}")
             await message.answer(
-                "Произошла ошибка при получении информации о сделке."
-                )
+                "Произошла ошибка при получении информации о сделке.")
 
     await state.clear()
