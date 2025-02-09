@@ -39,19 +39,16 @@ async def process_deal_id(message: Message, state: FSMContext):
 
             # Получение информации о компании
             company_data = await bitrix.get_company_info(company_id)
-            company_name = company_data.get('result', {}).get(
-                'TITLE', 'Неизвестно')
+            company_name = company_data.get('result', {}).get('TITLE', 'Неизвестно')
 
             # Получение информации о статусе сделки
             stage_id = deal_info.get('STAGE_ID')
             stage_data = await bitrix.get_deal_stage(stage_id)
             if not stage_data or not stage_data.get('result'):
                 stage_name = 'Неизвестно'
-                logger.error(
-                    f"Failed to retrieve deal stage for ID: {stage_id}")
+                logger.error(f"Failed to retrieve deal stage for ID: {stage_id}")
             else:
-                stage_name = stage_data.get('result', {}).get(
-                    'NAME', 'Неизвестно')
+                stage_name = stage_data.get('result', {}).get('NAME', 'Неизвестно')
 
             # Получение информации об ответственном
             responsible_id = deal_info.get('ASSIGNED_BY_ID')
@@ -62,31 +59,25 @@ async def process_deal_id(message: Message, state: FSMContext):
                 work_phone = 'Неизвестно'
                 email = 'Неизвестно'
                 position = 'Неизвестно'
-                logger.error(f"Failed to retrieve user data for ID: {
-                    responsible_id}")
+                logger.error(f"Failed to retrieve user data for ID: {responsible_id}")
             else:
                 user_info = user_data.get('result', [{}])[0]
-                responsible_name = f"{user_info.get('NAME', 'Неизвестно')} {
-                    user_info.get('LAST_NAME', 'Неизвестно')}"
+                responsible_name = f"{user_info.get('NAME', 'Неизвестно')} {user_info.get('LAST_NAME', 'Неизвестно')}"
                 work_phone = user_info.get('WORK_PHONE', 'Неизвестно')
                 email = user_info.get('EMAIL', 'Неизвестно')
                 position = user_info.get('WORK_POSITION', 'Неизвестно')
 
             # Форматирование даты и времени
-            date_create = datetime.fromisoformat(
-                deal_info.get('DATE_CREATE', '')).strftime('%d.%m.%Y %H:%M')
-            date_modify = datetime.fromisoformat(
-                deal_info.get('DATE_MODIFY', '')).strftime('%d.%m.%Y %H:%M')
-            last_activity_date = deal_info.get(
-                'LAST_ACTIVITY_TIME', 'Неизвестно')
+            date_create = datetime.fromisoformat(deal_info.get('DATE_CREATE', '')).strftime('%d.%m.%Y %H:%M')
+            date_modify = datetime.fromisoformat(deal_info.get('DATE_MODIFY', '')).strftime('%d.%m.%Y %H:%M')
+            last_activity_date = deal_info.get('LAST_ACTIVITY_TIME', 'Неизвестно')
 
             deal_message = (
                 f"<b>Информация о сделке:</b>\n"
                 f"<b>Номер:</b> {deal_info.get('ID', 'Не указано')}\n"
                 f"<b>Название:</b> {deal_info.get('TITLE', 'Не указано')}\n"
                 f"<b>Статус:</b> {stage_name}\n"
-                f"<b>Сумма:</b> {deal_info.get(
-                    'OPPORTUNITY', 'Не указано')} руб.\n"
+                f"<b>Сумма:</b> {deal_info.get('OPPORTUNITY', 'Не указано')} руб.\n"
                 f"<b>Компания:</b> {company_name}\n"
                 f"<b>ID ответственного:</b> {responsible_id}\n"
                 f"<b>Дата создания:</b> {date_create}\n"
@@ -95,18 +86,12 @@ async def process_deal_id(message: Message, state: FSMContext):
                 f"<b>Должность:</b> {position}\n"
                 f"<b>Рабочий телефон:</b> <code>{work_phone}</code>\n"
                 f"<b>Почта сотрудника:</b> <code>{email}</code>\n"
-                f"<b>Дата последнего касания:</b> <u>{
-                    last_activity_date}</u>\n"
-                f"<b>Контакт:</b> {
-                    deal_info.get('CONTACT_ID', 'Не указано')}\n"
-                f"<b>Закрыта:</b> {
-                    'Да' if deal_info.get('CLOSED') == 'Y' else 'Нет'}\n"
+                f"<b>Дата последнего касания:</b> <u>{last_activity_date}</u>\n"
+                f"<b>Закрыта:</b> {'Да' if deal_info.get('CLOSED') == 'Y' else 'Нет'}\n"
             )
             await message.answer(deal_message, parse_mode=ParseMode.HTML)
         else:
-            logging.error(
-                f"Unexpected response structure: {deal_data}")
-            await message.answer(
-                "Произошла ошибка при получении информации о сделке.")
+            logging.error(f"Unexpected response structure: {deal_data}")
+            await message.answer("Произошла ошибка при получении информации о сделке.")
 
     await state.clear()
