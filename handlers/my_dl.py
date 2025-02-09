@@ -46,7 +46,7 @@ async def process_deal_id(message: Message, state: FSMContext):
             stage_data = await bitrix.get_deal_stage(stage_id)
             if not stage_data or not stage_data.get('result'):
                 stage_name = 'Неизвестно'
-                logger.error(f"Failed to retrieve deal stage for ID: {stage_id}")
+                # logger.error(f"Failed to retrieve deal stage for ID: {stage_id}")
             else:
                 stage_name = stage_data.get('result', {}).get('NAME', 'Неизвестно')
                 if stage_name == '':
@@ -64,7 +64,7 @@ async def process_deal_id(message: Message, state: FSMContext):
                 work_phone = 'Неизвестно'
                 email = 'Неизвестно'
                 position = 'Неизвестно'
-                logger.error(f"Failed to retrieve user data for ID: {responsible_id}")
+                # logger.error(f"Failed to retrieve user data for ID: {responsible_id}")
             else:
                 user_info = user_data.get('result', [{}])[0]
                 responsible_name = f"{user_info.get('NAME', 'Неизвестно')} {user_info.get('LAST_NAME', 'Неизвестно')}"
@@ -96,7 +96,7 @@ async def process_deal_id(message: Message, state: FSMContext):
             )
             await message.answer(deal_message, parse_mode=ParseMode.HTML)
         else:
-            logging.error(f"Unexpected response structure: {deal_data}")
+            # logging.error(f"Unexpected response structure: {deal_data}")
             await message.answer("Произошла ошибка при получении информации о сделке.")
 
     await state.clear()
