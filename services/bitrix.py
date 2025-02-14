@@ -15,8 +15,8 @@ class BitrixAPI:
             params: Optional[Dict] = None
             ) -> Optional[Dict[str, Any]]:
         url = f"{self.webhook_base_url}/{method}"
-        # logger.info(f"Request URL: {url}")
-        # logger.info(f"Request Params: {params}")
+        logger.info(f"Request URL: {url}")
+        logger.info(f"Request Params: {params}")
 
         async with aiohttp.ClientSession() as session:
             try:
@@ -74,6 +74,7 @@ class BitrixAPI:
         stage_info = next((
             stage for stage in response.get(
                 'result', []) if stage['STATUS_ID'] == stage_id), {})
+        logger.info(f"СТАДИИИИИИИ: {response}")
         return {'result': stage_info}
 
     async def get_dealreg_user_fields(self, dealreg_id: str) -> Optional[Dict]:
@@ -83,5 +84,15 @@ class BitrixAPI:
         response = await self._call_method('crm.item.userfield.list', {
             'entityTypeId': 183,  # ID сущности DealReg
             'id': dealreg_id
+        })
+        return response
+
+    async def get_dealreg_stages(self) -> Optional[Dict]:
+        """
+        Получает список стадий для смарт-процесса DealReg.
+        """
+        response = await self._call_method('crm.status.list', {
+            'filter': {'ENTITY_ID': 'DEAL_STAGE'},  # Фильтр по стадиям сделок
+            'select': ['STATUS_ID', 'NAME']  # Выбираем ID и название стадий
         })
         return response

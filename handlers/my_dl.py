@@ -39,7 +39,8 @@ async def process_dealreg_number(message: Message, state: FSMContext):
     dealreg_info = dealreg_data['result'].get('item', {})
     dealreg_id = dealreg_info.get('id')
     dealreg_title = dealreg_info.get('title')
-    dealreg_stage = dealreg_info.get('stageId')
+    dealreg_stage_id = dealreg_info.get('stageId')  # ID стадии
+    dealreg_previous_stage_id = dealreg_info.get('previousStageId')  # ID предыдущей стадии
     dealreg_company = dealreg_info.get('companyId')
     dealreg_created = dealreg_info.get('createdTime')
     dealreg_modified = dealreg_info.get('updatedTime')
@@ -52,39 +53,57 @@ async def process_dealreg_number(message: Message, state: FSMContext):
     else:
         company_name = 'Неизвестно'
 
-    # Получаем информацию о статусе
-    stage_data = await bitrix.get_deal_stage(dealreg_stage)
-    stage_name = stage_data.get('result', {}).get('NAME', 'Неизвестно') if stage_data else 'Неизвестно'
+    # Ручное сопоставление стадий
+    stages = {
+        'DT183_37:NEW': 'Начало',
+        'DT183_37:PREPARATION': 'Прогрев партнёра',
+        'DT183_37:UC_AAYY8N': 'Квалификация HRlink',
+        'DT183_37:UC_92D1DY': 'Прогрев HRlink',
+        'DT183_37:UC_XFDN2C': 'Назначена встреча',
+        'DT183_37:16': 'Встреча не состоялась',
+        'DT183_37:UC_GDQZQ3': 'Истекает',
+        'DT183_37:UC_7O0GZ6': 'Продлён'
+    }
+
+    # Получаем название стадии
+    stage_name = stages.get(dealreg_stage_id, 'Неизвестно')
+    previous_stage_name = stages.get(dealreg_previous_stage_id, 'Неизвестно') if dealreg_previous_stage_id else 'Неизвестно'
 
     # Получаем информацию об ответственном за сделку
     responsible_name = 'Не назначен менеджер'
-    deal_responsible_for_deal_id = dealreg_info.get('ufCrm27_1731395822')  # Замените на правильное поле
+    responsible_email = 'Неизвестно'
+    responsible_telegram = 'Неизвестно'
+    responsible_position = 'Неизвестно'
+    deal_responsible_for_deal_id = dealreg_info.get('ufCrm27_1731395822')  # Ответственный за сделку
 
     if deal_responsible_for_deal_id:
         # Если есть ID ответственного за сделку, получаем его данные
         responsible_data = await bitrix.get_user(deal_responsible_for_deal_id)
         if responsible_data and responsible_data.get('result'):
-            responsible_name = (
-                f"{responsible_data.get('result', [{}])[0].get('NAME', 'Неизвестно')} "
-                f"{responsible_data.get('result', [{}])[0].get('LAST_NAME', 'Неизвестно')}"
-            )
+            responsible_info = responsible_data.get('result', [{}])[0]
+            responsible_name = f"{responsible_info.get('NAME', 'Неизвестно')} {responsible_info.get('LAST_NAME', 'Неизвестно')}"
+            responsible_email = responsible_info.get('EMAIL', 'Неизвестно')
+            responsible_telegram = responsible_info.get('UF_USR_1665651064433', 'Неизвестно')
+            responsible_position = responsible_info.get('WORK_POSITION', 'Неизвестно')
     elif dealreg_info.get('assignedById'):
         # Если ответственный за сделку не найден, используем обычного ответственного
         responsible_data = await bitrix.get_user(dealreg_info.get('assignedById'))
         if responsible_data and responsible_data.get('result'):
-            responsible_name = (
-                f"{responsible_data.get('result', [{}])[0].get('NAME', 'Неизвестно')} "
-                f"{responsible_data.get('result', [{}])[0].get('LAST_NAME', 'Неизвестно')}"
-            )
+            responsible_info = responsible_data.get('result', [{}])[0]
+            responsible_name = f"{responsible_info.get('NAME', 'Неизвестно')} {responsible_info.get('LAST_NAME', 'Неизвестно')}"
+            responsible_email = responsible_info.get('EMAIL', 'Неизвестно')
+            responsible_telegram = responsible_info.get('UF_USR_1665651064433', 'Неизвестно')
+            responsible_position = responsible_info.get('WORK_POSITION', 'Неизвестно')
     elif contact_ids:
         # Если ответственный не назначен, проверяем контакты
         for contact_id in contact_ids:
             contact_data = await bitrix.get_contact_info(contact_id)
             if contact_data and contact_data.get('result'):
-                responsible_name = (
-                    f"{contact_data.get('result', {}).get('NAME', 'Неизвестно')} "
-                    f"{contact_data.get('result', {}).get('LAST_NAME', 'Неизвестно')}"
-                )
+                responsible_info = contact_data.get('result', {})
+                responsible_name = f"{responsible_info.get('NAME', 'Неизвестно')} {responsible_info.get('LAST_NAME', 'Неизвестно')}"
+                responsible_email = responsible_info.get('EMAIL', 'Неизвестно')
+                responsible_telegram = responsible_info.get('UF_USR_1665651064433', 'Неизвестно')
+                responsible_position = responsible_info.get('WORK_POSITION', 'Неизвестно')
                 break
 
     # Форматируем даты
@@ -101,9 +120,16 @@ async def process_dealreg_number(message: Message, state: FSMContext):
         f"<b>Информация о DealReg:</b>\n"
         f"<b>Номер:</b> {dealreg_id}\n"
         f"<b>Название:</b> {dealreg_title}\n"
-        f"<b>Статус:</b> {stage_name}\n"
         f"<b>Компания:</b> {company_name}\n"
+        "\n"
+        f"<b>Текущая стадия:</b> <u>{stage_name}</u>\n"
+        f"<b>Предыдущая стадия:</b> {previous_stage_name}\n"
+        "\n"
         f"<b>Ответственный за сделку:</b> {responsible_name}\n"
+        f"<b>Должность:</b> {responsible_position}\n"
+        f"<b>Email:</b> <code>{responsible_email}</code>\n"
+        f"<b>Telegram:</b> <code>{responsible_telegram}</code>\n"
+        "\n"
         f"<b>Дата создания:</b> {created_date}\n"
         f"<b>Дата изменения:</b> {modified_date}\n"
     )
