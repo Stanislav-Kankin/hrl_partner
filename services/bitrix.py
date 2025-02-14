@@ -35,24 +35,36 @@ class BitrixAPI:
                 logger.error(f"Request failed: {e}")
                 return None
 
-    async def get_deal(self, deal_id: str) -> Optional[Dict]:
-        response = await self._call_method('crm.deal.get', {'id': deal_id})
-        logger.info(f"API Response: {response}")
+    async def get_dealreg_by_id(self, dealreg_id: str) -> Optional[Dict]:
+        """
+        Получает смарт-процесс DealReg по его ID.
+        """
+        response = await self._call_method('crm.item.get', {
+            'entityTypeId': 183,  # ID сущности DealReg
+            'id': dealreg_id
+        })
+        return response
+
+    async def get_company_info(self, company_id: str) -> Optional[Dict]:
+        """
+        Получает информацию о компании по её ID.
+        """
+        response = await self._call_method('crm.company.get', {'id': company_id})
         return response
 
     async def get_user(self, user_id: str) -> Optional[Dict]:
+        """
+        Получает информацию о пользователе по его ID.
+        """
         response = await self._call_method('user.get', {'ID': user_id})
         if response is None:
             logger.error(f"Failed to retrieve user data for ID: {user_id}")
         return response
 
-    async def get_company_info(self, company_id: str) -> Optional[Dict]:
-        response = await self._call_method(
-            'crm.company.get', {'ID': company_id}
-            )
-        return response
-
     async def get_deal_stage(self, stage_id: str) -> Optional[Dict]:
+        """
+        Получает информацию о стадии сделки по её ID.
+        """
         response = await self._call_method('crm.status.list', {
             'filter': {'ENTITY_ID': 'DEAL_STAGE'}, 'select': [
                 'STATUS_ID', 'NAME']})

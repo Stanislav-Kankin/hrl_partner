@@ -14,89 +14,81 @@ logger = logging.getLogger(__name__)
 
 
 class MyDealReg(StatesGroup):
-    waiting_for_deal_id = State()
+    waiting_for_dealreg_number = State()
 
 
 @router.message(Command("my_dl"))
 async def my_dl_command(message: Message, state: FSMContext):
-    await message.answer("Введите интересующий вас номер DealReg:")
-    await state.set_state(MyDealReg.waiting_for_deal_id)
+    await message.answer("Введите номер DealReg:")
+    await state.set_state(MyDealReg.waiting_for_dealreg_number)
 
 
-@router.message(MyDealReg.waiting_for_deal_id)
-async def process_deal_id(message: Message, state: FSMContext):
-    deal_id = message.text
+@router.message(MyDealReg.waiting_for_dealreg_number)
+async def process_dealreg_number(message: Message, state: FSMContext):
+    dealreg_number = message.text
     bitrix = BitrixAPI(os.getenv("BITRIX_WEBHOOK"))
-    deal_data = await bitrix.get_deal(deal_id=deal_id)
 
-    if not deal_data or not deal_data.get('result'):
-        await message.answer("Сделка с таким номером не найдена.")
+    # Пытаемся найти DealReg по ID
+    dealreg_data = await bitrix.get_dealreg_by_id(dealreg_number)
+
+    if not dealreg_data or not dealreg_data.get('result'):
+        await message.answer("DealReg с таким номером не найден.")
+        await state.clear()
+        return
+
+    dealreg_info = dealreg_data['result'].get('item', {})
+    dealreg_id = dealreg_info.get('id')
+    dealreg_title = dealreg_info.get('title')
+    dealreg_stage = dealreg_info.get('stageId')
+    dealreg_company = dealreg_info.get('companyId')
+    dealreg_responsible = dealreg_info.get('assignedById')
+    dealreg_created = dealreg_info.get('createdTime')
+    dealreg_modified = dealreg_info.get('updatedTime')
+
+    # Получаем информацию о компании
+    if dealreg_company:
+        company_data = await bitrix.get_company_info(dealreg_company)
+        company_name = company_data.get('result', {}).get('TITLE', 'Неизвестно') if company_data else 'Неизвестно'
     else:
-        result = deal_data['result']
-        if isinstance(result, dict):
-            deal_info = result
-            company_id = deal_info.get('COMPANY_ID')
+        company_name = 'Неизвестно'
 
-            # Получение информации о компании
-            company_data = await bitrix.get_company_info(company_id)
-            company_name = company_data.get('result', {}).get('TITLE', 'Неизвестно')
+    # Получаем информацию о статусе
+    stage_data = await bitrix.get_deal_stage(dealreg_stage)
+    stage_name = stage_data.get('result', {}).get('NAME', 'Неизвестно') if stage_data else 'Неизвестно'
 
-            # Получение информации о статусе сделки
-            stage_id = deal_info.get('STAGE_ID')
-            stage_data = await bitrix.get_deal_stage(stage_id)
-            if not stage_data or not stage_data.get('result'):
-                stage_name = 'Неизвестно'
-                # logger.error(f"Failed to retrieve deal stage for ID: {stage_id}")
-            else:
-                stage_name = stage_data.get('result', {}).get('NAME', 'Неизвестно')
-                if stage_name == '':
-                    stage_name = 'Неизвестно'
-                    logger.warning(f"Empty stage name retrieved for ID: {stage_id}")
-
-            logger.info(f"Deal stage ID: {stage_id}, Stage name: {stage_name}")
-
-            # Получение информации об ответственном
-            responsible_id = deal_info.get('ASSIGNED_BY_ID')
-            user_data = await bitrix.get_user(responsible_id)
-
-            if user_data is None or not user_data.get('result'):
-                responsible_name = 'Неизвестно'
-                work_phone = 'Неизвестно'
-                email = 'Неизвестно'
-                position = 'Неизвестно'
-                # logger.error(f"Failed to retrieve user data for ID: {responsible_id}")
-            else:
-                user_info = user_data.get('result', [{}])[0]
-                responsible_name = f"{user_info.get('NAME', 'Неизвестно')} {user_info.get('LAST_NAME', 'Неизвестно')}"
-                work_phone = user_info.get('WORK_PHONE', 'Неизвестно')
-                email = user_info.get('EMAIL', 'Неизвестно')
-                position = user_info.get('WORK_POSITION', 'Неизвестно')
-
-            # Форматирование даты и времени
-            date_create = datetime.fromisoformat(deal_info.get('DATE_CREATE', '')).strftime('%d.%m.%Y %H:%M')
-            date_modify = datetime.fromisoformat(deal_info.get('DATE_MODIFY', '')).strftime('%d.%m.%Y %H:%M')
-            last_activity_date = deal_info.get('LAST_ACTIVITY_TIME', 'Неизвестно')
-
-            deal_message = (
-                f"<b>Информация о сделке:</b>\n"
-                f"<b>Номер:</b> {deal_info.get('ID', 'Не указано')}\n"
-                f"<b>Название:</b> {deal_info.get('TITLE', 'Не указано')}\n"
-                f"<b>Статус:</b> {stage_name}\n"
-                f"<b>Сумма:</b> {deal_info.get('OPPORTUNITY', 'Не указано')} руб.\n"
-                f"<b>Компания:</b> {company_name}\n"
-                f"<b>ID ответственного:</b> {responsible_id}\n"
-                f"<b>Дата создания:</b> {date_create}\n"
-                f"<b>Дата изменения:</b> {date_modify}\n"
-                f"<b>Ответственный:</b> {responsible_name}\n"
-                f"<b>Должность:</b> {position}\n"
-                f"<b>Рабочий телефон:</b> <code>{work_phone}</code>\n"
-                f"<b>Почта сотрудника:</b> <code>{email}</code>\n"
-                f"<b>Дата последнего касания:</b> <u>{last_activity_date}</u>\n"
-                f"<b>Закрыта:</b> {'Да' if deal_info.get('CLOSED') == 'Y' else 'Нет'}\n"
+    # Получаем информацию об ответственном за сделку
+    if dealreg_responsible:
+        responsible_data = await bitrix.get_user(dealreg_responsible)
+        if responsible_data and responsible_data.get('result'):
+            responsible_name = (
+                f"{responsible_data.get('result', [{}])[0].get('NAME', 'Неизвестно')} "
+                f"{responsible_data.get('result', [{}])[0].get('LAST_NAME', 'Неизвестно')}"
             )
-            await message.answer(deal_message, parse_mode=ParseMode.HTML)
         else:
-            # logging.error(f"Unexpected response structure: {deal_data}")
-            await message.answer("Произошла ошибка при получении информации о сделке.")
+            responsible_name = 'не назначен менеджер'
+    else:
+        responsible_name = 'не назначен менеджер'
+
+    # Форматируем даты
+    try:
+        created_date = datetime.fromisoformat(dealreg_created).strftime('%d.%m.%Y %H:%M') if dealreg_created else 'Неизвестно'
+        modified_date = datetime.fromisoformat(dealreg_modified).strftime('%d.%m.%Y %H:%M') if dealreg_modified else 'Неизвестно'
+    except (TypeError, ValueError) as e:
+        logger.error(f"Error parsing dates: {e}")
+        created_date = 'Неизвестно'
+        modified_date = 'Неизвестно'
+
+    # Формируем сообщение
+    dealreg_message = (
+        f"<b>Информация о DealReg:</b>\n"
+        f"<b>Номер:</b> {dealreg_id}\n"
+        f"<b>Название:</b> {dealreg_title}\n"
+        f"<b>Статус:</b> {stage_name}\n"
+        f"<b>Компания:</b> {company_name}\n"
+        f"<b>Ответственный за сделку:</b> {responsible_name}\n"
+        f"<b>Дата создания:</b> {created_date}\n"
+        f"<b>Дата изменения:</b> {modified_date}\n"
+    )
+    await message.answer(dealreg_message, parse_mode=ParseMode.HTML)
 
     await state.clear()
