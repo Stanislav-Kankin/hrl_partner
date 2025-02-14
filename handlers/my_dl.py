@@ -38,6 +38,7 @@ async def process_dealreg_number(message: Message, state: FSMContext):
 
     dealreg_info = dealreg_data['result'].get('item', {})
     dealreg_id = dealreg_info.get('id')
+    dealreg_title = dealreg_info.get('title')
     dealreg_stage_id = dealreg_info.get('stageId')  # ID стадии
     dealreg_previous_stage_id = dealreg_info.get('previousStageId')  # ID предыдущей стадии
     dealreg_company = dealreg_info.get('companyId')
@@ -118,6 +119,7 @@ async def process_dealreg_number(message: Message, state: FSMContext):
     dealreg_message = (
         f"<b>Информация о DealReg:</b>\n"
         f"<b>Номер:</b> {dealreg_id}\n"
+        f"<b>Название:</b> {dealreg_title}\n"
         f"<b>Компания:</b> {company_name}\n"
         "\n"
         f"<b>Текущая стадия:</b> <u>{stage_name}</u>\n"
