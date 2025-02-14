@@ -15,14 +15,14 @@ class BitrixAPI:
             params: Optional[Dict] = None
             ) -> Optional[Dict[str, Any]]:
         url = f"{self.webhook_base_url}/{method}"
-        logger.info(f"Request URL: {url}")
-        logger.info(f"Request Params: {params}")
+        # logger.info(f"Request URL: {url}")
+        # logger.info(f"Request Params: {params}")
 
         async with aiohttp.ClientSession() as session:
             try:
                 async with session.post(url, json=params or {}) as response:
                     data = await response.json()
-                    logger.info(f"API Response: {data}")
+                    # logger.info(f"API Response: {data}")
                     if 'error' in data:
                         logger.error(
                             f"API Error: {data.get(
@@ -75,3 +75,13 @@ class BitrixAPI:
             stage for stage in response.get(
                 'result', []) if stage['STATUS_ID'] == stage_id), {})
         return {'result': stage_info}
+
+    async def get_dealreg_user_fields(self, dealreg_id: str) -> Optional[Dict]:
+        """
+        Получает пользовательские поля DealReg по его ID.
+        """
+        response = await self._call_method('crm.item.userfield.list', {
+            'entityTypeId': 183,  # ID сущности DealReg
+            'id': dealreg_id
+        })
+        return response

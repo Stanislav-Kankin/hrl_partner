@@ -41,9 +41,9 @@ async def process_dealreg_number(message: Message, state: FSMContext):
     dealreg_title = dealreg_info.get('title')
     dealreg_stage = dealreg_info.get('stageId')
     dealreg_company = dealreg_info.get('companyId')
-    dealreg_responsible = dealreg_info.get('assignedById')
     dealreg_created = dealreg_info.get('createdTime')
     dealreg_modified = dealreg_info.get('updatedTime')
+    contact_ids = dealreg_info.get('contactIds', [0])
 
     # Получаем информацию о компании
     if dealreg_company:
@@ -57,17 +57,35 @@ async def process_dealreg_number(message: Message, state: FSMContext):
     stage_name = stage_data.get('result', {}).get('NAME', 'Неизвестно') if stage_data else 'Неизвестно'
 
     # Получаем информацию об ответственном за сделку
-    if dealreg_responsible:
-        responsible_data = await bitrix.get_user(dealreg_responsible)
+    responsible_name = 'Не назначен менеджер'
+    deal_responsible_for_deal_id = dealreg_info.get('ufCrm27_1731395822')  # Замените на правильное поле
+
+    if deal_responsible_for_deal_id:
+        # Если есть ID ответственного за сделку, получаем его данные
+        responsible_data = await bitrix.get_user(deal_responsible_for_deal_id)
         if responsible_data and responsible_data.get('result'):
             responsible_name = (
                 f"{responsible_data.get('result', [{}])[0].get('NAME', 'Неизвестно')} "
                 f"{responsible_data.get('result', [{}])[0].get('LAST_NAME', 'Неизвестно')}"
             )
-        else:
-            responsible_name = 'не назначен менеджер'
-    else:
-        responsible_name = 'не назначен менеджер'
+    elif dealreg_info.get('assignedById'):
+        # Если ответственный за сделку не найден, используем обычного ответственного
+        responsible_data = await bitrix.get_user(dealreg_info.get('assignedById'))
+        if responsible_data and responsible_data.get('result'):
+            responsible_name = (
+                f"{responsible_data.get('result', [{}])[0].get('NAME', 'Неизвестно')} "
+                f"{responsible_data.get('result', [{}])[0].get('LAST_NAME', 'Неизвестно')}"
+            )
+    elif contact_ids:
+        # Если ответственный не назначен, проверяем контакты
+        for contact_id in contact_ids:
+            contact_data = await bitrix.get_contact_info(contact_id)
+            if contact_data and contact_data.get('result'):
+                responsible_name = (
+                    f"{contact_data.get('result', {}).get('NAME', 'Неизвестно')} "
+                    f"{contact_data.get('result', {}).get('LAST_NAME', 'Неизвестно')}"
+                )
+                break
 
     # Форматируем даты
     try:
