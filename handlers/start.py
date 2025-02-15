@@ -77,7 +77,9 @@ async def process_phone(message: Message, state: FSMContext):
                 "или /my_dl для запроса статуса заявки."
             )
         else:
-            await message.answer("Неверная почта или телефон. Авторизация не удалась.")
+            await message.answer(
+                "Неверная почта или телефон. Авторизация не удалась."
+                )
     else:
         await message.answer("Не удалось провести авторизацию.")
 

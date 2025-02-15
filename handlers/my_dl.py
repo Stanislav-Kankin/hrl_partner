@@ -99,7 +99,8 @@ async def process_dealreg_number(message: Message, state: FSMContext):
             responsible_info = responsible_data.get('result', [{}])[0]
             responsible_name = f"{responsible_info.get(
                 'NAME', 'Неизвестно')} {responsible_info.get(
-                'LAST_NAME', 'Неизвестно')}"
+                    'LAST_NAME', 'Неизвестно'
+                    )}"
             responsible_email = responsible_info.get('EMAIL', 'Неизвестно')
             responsible_telegram = responsible_info.get(
                 'UF_USR_1665651064433', 'Неизвестно')
