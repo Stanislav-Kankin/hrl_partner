@@ -3,7 +3,7 @@ from aiogram.types import (
     Message, WebAppInfo, InlineKeyboardMarkup, InlineKeyboardButton
 )
 from aiogram.filters import Command
-from services.partners import PARTNERS
+from services.partners import USERS, PARTNERS
 
 router = Router()
 
@@ -12,17 +12,17 @@ router = Router()
 async def dl_partner_command(message: Message):
     user_id = message.from_user.id
 
-    # Ищем пользователя в словаре
+    # Ищем пользователя в словаре USERS
     user_data = None
-    for user in PARTNERS["users"].values():
-        if user["id"] == user_id:
+    for user in USERS.values():
+        if user.get("id") == user_id:
             user_data = user
             break
 
     if not user_data:
         await message.answer(
             "Пожалуйста, авторизуйтесь с помощью команды /start"
-            )
+        )
         return
 
     # Получаем доступные ссылки для пользователя

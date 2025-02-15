@@ -1,29 +1,32 @@
+# Словарь с партнёрами и их ссылками
 PARTNERS = {
     "НН": "https://b24-drzxem.bitrix24site.ru/crm_form_1kuge/",
     "СБЕР РЕШЕНИЯ": "https://b24-lpcw1z.bitrix24site.ru/crm_form_842ad/",
     "БФТ": "https://b24-lpcw1z.bitrix24site.ru/crm_form_qs4ax/",
-    "МТС": "https://b24-lpcw1z.bitrix24site.ru/crm_form_e44pd/",
-    "users": {
-        "admin": {
-            "id": 0,
-            "name": "admin",
-            "email": "admin",
-            "phone_num": "111",
-            "allowed_partners": ["НН", "СБЕР РЕШЕНИЯ", "БФТ", "МТС"]
-        },
-        "Станислав": {
-            "id": 1,
-            "name": "Станислав",
-            "email": "skankin@hr-link.ru",
-            "phone_num": "89898553407",
-            "allowed_partners": ["НН"]  # Только ссылка НН
-        },
-        "Иван": {
-            "id": 2,
-            "name": "Иван",
-            "email": "ivan@hr-link.ru",
-            "phone_num": "89898553407",
-            "allowed_partners": ["МТС"]
-        }
-    }
+    "МТС": "https://b24-lpcw1z.bitrix24site.ru/crm_form_e44pd/"
+}
+
+# Словарь с пользователями для авторизации
+USERS = {
+    "Станислав Какнин": {
+        "name": "Станислав",
+        "last_name": "Какнин",
+        "email": "stanislav@example.com",
+        "phone_num": "89111234455",
+        "allowed_partners": ["НН"]
+    },
+    "Иван Иванов": {
+        "name": "Иван",
+        "last_name": "Иванов",
+        "email": "ivan@example.com",
+        "phone_num": "89221234567",
+        "allowed_partners": ["НН", "Партнёр 2"]
+    },
+    "admin admin": {
+        "name": "admin",
+        "last_name": "admin",
+        "email": "admin@example.com",
+        "phone_num": "89001234567",
+        "allowed_partners": ["НН", "Партнёр 3"]
+    },
 }

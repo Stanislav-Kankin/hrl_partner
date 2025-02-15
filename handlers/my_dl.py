@@ -8,7 +8,7 @@ from services.bitrix import BitrixAPI
 import os
 import logging
 from datetime import datetime
-from services.partners import PARTNERS
+from services.partners import USERS
 
 router = Router()
 logger = logging.getLogger(__name__)
@@ -23,7 +23,7 @@ async def my_dl_command(message: Message, state: FSMContext):
     user_id = message.from_user.id
 
     # Проверяем, авторизован ли пользователь
-    if not any(user['id'] == user_id for user in PARTNERS["users"].values()):
+    if not any(user.get("id") == user_id for user in USERS.values()):
         await message.answer(
             "Пожалуйста, авторизуйтесь с помощью команды /start")
         return
@@ -60,9 +60,9 @@ async def process_dealreg_number(message: Message, state: FSMContext):
         company_data = await bitrix.get_company_info(dealreg_company)
         company_name = company_data.get(
             'result', {}
-            ).get(
-                'TITLE', 'Неизвестно'
-                ) if company_data else 'Неизвестно'
+        ).get(
+            'TITLE', 'Неизвестно'
+        ) if company_data else 'Неизвестно'
     else:
         company_name = 'Неизвестно'
 
@@ -82,7 +82,7 @@ async def process_dealreg_number(message: Message, state: FSMContext):
     stage_name = stages.get(dealreg_stage_id, 'Неизвестно')
     previous_stage_name = stages.get(
         dealreg_previous_stage_id, 'Неизвестно'
-        ) if dealreg_previous_stage_id else 'Неизвестно'
+    ) if dealreg_previous_stage_id else 'Неизвестно'
 
     # Получаем информацию об ответственном за сделку
     responsible_name = 'Не назначен менеджер'
@@ -99,7 +99,7 @@ async def process_dealreg_number(message: Message, state: FSMContext):
             responsible_info = responsible_data.get('result', [{}])[0]
             responsible_name = f"{responsible_info.get(
                 'NAME', 'Неизвестно')} {responsible_info.get(
-                    'LAST_NAME', 'Неизвестно')}"
+                'LAST_NAME', 'Неизвестно')}"
             responsible_email = responsible_info.get('EMAIL', 'Неизвестно')
             responsible_telegram = responsible_info.get(
                 'UF_USR_1665651064433', 'Неизвестно')
@@ -112,7 +112,7 @@ async def process_dealreg_number(message: Message, state: FSMContext):
             responsible_info = responsible_data.get('result', [{}])[0]
             responsible_name = f"{responsible_info.get(
                 'NAME', 'Неизвестно')} {
-                    responsible_info.get('LAST_NAME', 'Неизвестно')}"
+                responsible_info.get('LAST_NAME', 'Неизвестно')}"
             responsible_email = responsible_info.get('EMAIL', 'Неизвестно')
             responsible_telegram = responsible_info.get(
                 'UF_USR_1665651064433', 'Неизвестно')
@@ -127,7 +127,7 @@ async def process_dealreg_number(message: Message, state: FSMContext):
                 responsible_name = f"{
                     responsible_info.get(
                         'NAME', 'Неизвестно')} {
-                            responsible_info.get('LAST_NAME', 'Неизвестно')}"
+                    responsible_info.get('LAST_NAME', 'Неизвестно')}"
                 responsible_email = responsible_info.get('EMAIL', 'Неизвестно')
                 responsible_telegram = responsible_info.get(
                     'UF_USR_1665651064433', 'Неизвестно')
@@ -139,12 +139,12 @@ async def process_dealreg_number(message: Message, state: FSMContext):
     try:
         created_date = datetime.fromisoformat(
             dealreg_created).strftime(
-                '%d.%m.%Y %H:%M'
-                ) if dealreg_created else 'Неизвестно'
+            '%d.%m.%Y %H:%M'
+        ) if dealreg_created else 'Неизвестно'
         modified_date = datetime.fromisoformat(
             dealreg_modified).strftime(
-                '%d.%m.%Y %H:%M'
-                ) if dealreg_modified else 'Неизвестно'
+            '%d.%m.%Y %H:%M'
+        ) if dealreg_modified else 'Неизвестно'
     except (TypeError, ValueError) as e:
         logger.error(f"Error parsing dates: {e}")
         created_date = 'Неизвестно'
