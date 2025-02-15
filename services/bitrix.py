@@ -49,7 +49,9 @@ class BitrixAPI:
         """
         Получает информацию о компании по её ID.
         """
-        response = await self._call_method('crm.company.get', {'id': company_id})
+        response = await self._call_method(
+            'crm.company.get', {'id': company_id}
+            )
         return response
 
     async def get_user(self, user_id: str) -> Optional[Dict]:
