@@ -10,7 +10,7 @@ PARTNERS = {
 USERS = {
     "Станислав Какнин": {
         "name": "Станислав",
-        "last_name": "Какнин",
+        "last_name": "Канкин",
         "email": "stanislav@example.com",
         "phone_num": "89111234455",
         "allowed_partners": ["НН"]
@@ -20,13 +20,18 @@ USERS = {
         "last_name": "Иванов",
         "email": "ivan@example.com",
         "phone_num": "89221234567",
-        "allowed_partners": ["НН", "Партнёр 2"]
+        "allowed_partners": ["БФТ"]
     },
     "admin admin": {
         "name": "admin",
         "last_name": "admin",
-        "email": "admin@example.com",
-        "phone_num": "89001234567",
-        "allowed_partners": ["НН", "Партнёр 3"]
+        "email": "admin",
+        "phone_num": "1",
+        "allowed_partners": [
+            "НН",
+            "СБЕР РЕШЕНИЯ",
+            "БФТ",
+            "МТС"
+            ]
     },
 }
