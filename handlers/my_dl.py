@@ -8,6 +8,7 @@ from services.bitrix import BitrixAPI
 import os
 import logging
 from datetime import datetime
+from services.partners import PARTNERS
 
 router = Router()
 logger = logging.getLogger(__name__)
@@ -19,6 +20,14 @@ class MyDealReg(StatesGroup):
 
 @router.message(Command("my_dl"))
 async def my_dl_command(message: Message, state: FSMContext):
+    user_id = message.from_user.id
+
+    # Проверяем, авторизован ли пользователь
+    if not any(user['id'] == user_id for user in PARTNERS["users"].values()):
+        await message.answer(
+            "Пожалуйста, авторизуйтесь с помощью команды /start")
+        return
+
     await message.answer("Введите номер DealReg:")
     await state.set_state(MyDealReg.waiting_for_dealreg_number)
 

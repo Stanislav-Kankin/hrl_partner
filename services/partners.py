@@ -17,6 +17,13 @@ PARTNERS = {
             "email": "skankin@hr-link.ru",
             "phone_num": "89898553407",
             "allowed_partners": ["НН"]  # Только ссылка НН
+        },
+        "Иван": {
+            "id": 2,
+            "name": "Иван",
+            "email": "ivan@hr-link.ru",
+            "phone_num": "89898553407",
+            "allowed_partners": ["МТС"]
         }
     }
 }
