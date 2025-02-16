@@ -29,13 +29,17 @@ async def admin_command(message: Message):
     if any(user.get("id") == user_id and user.get("email") == "admin" for user in USERS.values()):
         keyboard = InlineKeyboardMarkup(inline_keyboard=[
             [InlineKeyboardButton(
-                text="Добавить пользователя", callback_data="add_user")],
+                text="Добавить пользователя 🙋‍♂️ 🙋‍♀️",
+                callback_data="add_user")],
             [InlineKeyboardButton(
-                text="Редактировать пользователя", callback_data="edit_user")],
+                text="Редактировать пользователя 🖋️ ",
+                callback_data="edit_user")],
             [InlineKeyboardButton(
-                text="Удалить пользователя", callback_data="delete_user")],
+                text="Удалить пользователя ❌ ",
+                callback_data="delete_user")],
             [InlineKeyboardButton(
-                text="Список пользователей", callback_data="list_users")]
+                text="Список пользователей 🗂️",
+                callback_data="list_users")]
         ])
         await message.answer(
             "🚀  Вы вошли как администратор. Выберите действие:",
