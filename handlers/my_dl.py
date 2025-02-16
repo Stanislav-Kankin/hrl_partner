@@ -53,7 +53,6 @@ async def process_dealreg_number(message: Message, state: FSMContext):
     dealreg_company = dealreg_info.get('companyId')
     dealreg_created = dealreg_info.get('createdTime')
     dealreg_modified = dealreg_info.get('updatedTime')
-    dealreg_last_activity = dealreg_info.get('LAST_ACTIVITY_TIME')  # Last download date
     contact_ids = dealreg_info.get('contactIds', [0])
 
     # Получаем информацию о компании
@@ -64,8 +63,10 @@ async def process_dealreg_number(message: Message, state: FSMContext):
         ).get(
             'TITLE', 'Неизвестно'
         ) if company_data else 'Неизвестно'
+        dealreg_last_activity = company_data.get('result', {}).get('LAST_ACTIVITY_TIME')  # Дата последнего качания
     else:
         company_name = 'Неизвестно'
+        dealreg_last_activity = None
 
     # Ручное сопоставление стадий
     stages = {
