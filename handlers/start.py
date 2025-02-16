@@ -23,7 +23,7 @@ async def start_command(message: Message, state: FSMContext):
     if any(user.get("id") == user_id for user in USERS.values()):
         await message.answer(
             "Используйте /dl_partner для подачи заявки на DealReg, "
-            "или /my_dl для запроса статуса заявки."
+            "или /my_dl для запроса статуса заявки. 💡"
         )
     else:
         await message.answer("Авторизуйтесь, пришлите своё Имя 👤")
