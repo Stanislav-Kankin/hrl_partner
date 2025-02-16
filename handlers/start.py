@@ -22,6 +22,7 @@ async def start_command(message: Message, state: FSMContext):
     # Проверяем, авторизован ли пользователь
     if any(user.get("id") == user_id for user in USERS.values()):
         await message.answer(
+            "Добро пожаловать! 🚀\n"
             "Используйте /dl_partner для подачи заявки на DealReg, "
             "или /my_dl для запроса статуса заявки. 💡"
         )
