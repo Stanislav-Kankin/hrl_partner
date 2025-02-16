@@ -53,6 +53,7 @@ async def process_dealreg_number(message: Message, state: FSMContext):
     dealreg_company = dealreg_info.get('companyId')
     dealreg_created = dealreg_info.get('createdTime')
     dealreg_modified = dealreg_info.get('updatedTime')
+    dealreg_last_activity = dealreg_info.get('LAST_ACTIVITY_TIME')  # Last download date
     contact_ids = dealreg_info.get('contactIds', [0])
 
     # Получаем информацию о компании
@@ -146,10 +147,15 @@ async def process_dealreg_number(message: Message, state: FSMContext):
             dealreg_modified).strftime(
             '%d.%m.%Y %H:%M'
         ) if dealreg_modified else 'Неизвестно'
+        last_activity_date = datetime.fromisoformat(
+            dealreg_last_activity).strftime(
+            '%d.%m.%Y %H:%M'
+        ) if dealreg_last_activity else 'Неизвестно'
     except (TypeError, ValueError) as e:
         logger.error(f"Error parsing dates: {e}")
         created_date = 'Неизвестно'
         modified_date = 'Неизвестно'
+        last_activity_date = 'Неизвестно'
 
     # Формируем сообщение
     dealreg_message = (
@@ -167,6 +173,7 @@ async def process_dealreg_number(message: Message, state: FSMContext):
         "\n"
         f"<b>Дата создания:</b> {created_date}\n"
         f"<b>Дата изменения:</b> {modified_date}\n"
+        f"<b>Дата последнего качания:</b> {last_activity_date}\n"
     )
     await message.answer(dealreg_message, parse_mode=ParseMode.HTML)
 
