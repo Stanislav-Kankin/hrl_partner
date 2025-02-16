@@ -97,10 +97,7 @@ async def process_dealreg_number(message: Message, state: FSMContext):
         responsible_data = await bitrix.get_user(deal_responsible_for_deal_id)
         if responsible_data and responsible_data.get('result'):
             responsible_info = responsible_data.get('result', [{}])[0]
-            responsible_name = f"{responsible_info.get(
-                'NAME', 'Неизвестно')} {responsible_info.get(
-                    'LAST_NAME', 'Неизвестно'
-                    )}"
+            responsible_name = f"{responsible_info.get('NAME', 'Неизвестно')} {responsible_info.get('LAST_NAME', 'Неизвестно')}"
             responsible_email = responsible_info.get('EMAIL', 'Неизвестно')
             responsible_telegram = responsible_info.get(
                 'UF_USR_1665651064433', 'Неизвестно')
