@@ -63,7 +63,8 @@ async def process_dealreg_number(message: Message, state: FSMContext):
         ).get(
             'TITLE', 'Неизвестно'
         ) if company_data else 'Неизвестно'
-        dealreg_last_activity = company_data.get('result', {}).get('LAST_ACTIVITY_TIME')  # Дата последнего качания
+        dealreg_last_activity = company_data.get(
+            'result', {}).get('LAST_ACTIVITY_TIME')  # Дата последнего качания
     else:
         company_name = 'Неизвестно'
         dealreg_last_activity = None

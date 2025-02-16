@@ -5,7 +5,7 @@ from aiogram.fsm.storage.memory import MemoryStorage
 from aiogram.client.default import DefaultBotProperties
 from dotenv import load_dotenv
 import logging
-from handlers import start, dl_partner, my_dl
+from handlers import start, dl_partner, my_dl, admin
 
 load_dotenv()
 
@@ -24,6 +24,7 @@ dp = Dispatcher(storage=storage)
 dp.include_router(start.router)
 dp.include_router(dl_partner.router)
 dp.include_router(my_dl.router)
+dp.include_router(admin.router)  # Добавляем роутер для админских команд
 
 
 async def main():
