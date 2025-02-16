@@ -104,8 +104,27 @@ async def process_user_partners(message: Message, state: FSMContext):
 
 @router.callback_query(F.data == "list_users")
 async def list_users_callback(callback: CallbackQuery):
-    users_list = "\n".join([f"{user['name']} {user['last_name']}" for user in USERS.values()])
-    await callback.message.answer(f"Список пользователей:\n{users_list}")
+    users_info = []
+
+    for full_name, user_data in USERS.items():
+        # Формируем информацию о каждом пользователе
+        user_info = (
+            f"👤 <b>{full_name}</b>\n"
+            f"📞 Телефон: <code>{user_data.get(
+                'phone_num', 'Не указан')}</code>\n"
+            f"📧 Почта: <code>{user_data.get('email', 'Не указана')}</code>\n"
+            f"🔗 Доступные партнеры: {', '.join(user_data.get(
+                'allowed_partners', []))}\n"
+        )
+        users_info.append(user_info)
+
+    # Формируем итоговое сообщение
+    if users_info:
+        response = "Список пользователей:\n\n" + "\n".join(users_info)
+    else:
+        response = "Пользователи не найдены."
+
+    await callback.message.answer(response, parse_mode="HTML")
     await callback.answer()
 
 
