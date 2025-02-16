@@ -85,3 +85,11 @@ async def process_phone(message: Message, state: FSMContext):
         await message.answer("⚠️Не удалось провести авторизацию.⚠️")
 
     await state.clear()
+
+
+@router.message()
+async def echo_handler(message: Message):
+    await message.answer(
+        "Не знаю, что с этим делать. 🤔\n"
+        "Вызовите сначала какую-либо команду, например /start."
+    )
