@@ -25,7 +25,7 @@ async def my_dl_command(message: Message, state: FSMContext):
     # Проверяем, авторизован ли пользователь
     if not any(user.get("id") == user_id for user in USERS.values()):
         await message.answer(
-            "Пожалуйста, авторизуйтесь с помощью команды /start")
+            "⚠️ Пожалуйста, авторизуйтесь с помощью команды /start ⚠️")
         return
 
     await message.answer("Введите номер DealReg:")
@@ -41,7 +41,7 @@ async def process_dealreg_number(message: Message, state: FSMContext):
     dealreg_data = await bitrix.get_dealreg_by_id(dealreg_number)
 
     if not dealreg_data or not dealreg_data.get('result'):
-        await message.answer("DealReg с таким номером не найден.")
+        await message.answer("DealReg с таким номером не найден. ❌")
         await state.clear()
         return
 
@@ -168,10 +168,10 @@ async def process_dealreg_number(message: Message, state: FSMContext):
         f"<b>Текущая стадия:</b> <u>{stage_name}</u>\n"
         f"<b>Предыдущая стадия:</b> {previous_stage_name}\n"
         "\n"
-        f"<b>Ответственный за сделку:</b> {responsible_name}\n"
-        f"<b>Должность:</b> {responsible_position}\n"
-        f"<b>Email:</b> <code>{responsible_email}</code>\n"
-        f"<b>Telegram:</b> <code>{responsible_telegram}</code>\n"
+        f"<b>Ответственный за сделку:</b> {responsible_name} 👤\n"
+        f"<b>Должность:</b> {responsible_position} 🤝\n"
+        f"<b>Email:</b> <code>{responsible_email}</code>📧\n"
+        f"<b>Telegram:</b> <code>{responsible_telegram}</code> 📞\n"
         "\n"
         f"<b>Дата создания:</b> {created_date}\n"
         f"<b>Дата изменения:</b> {modified_date}\n"
