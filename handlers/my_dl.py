@@ -173,7 +173,8 @@ async def process_dealreg_number(message: Message, state: FSMContext):
         "\n"
         f"<b>Дата создания:</b> {created_date}\n"
         f"<b>Дата изменения:</b> {modified_date}\n"
-        f"<b>Дата последнего качания:</b> {last_activity_date}\n"
+        "\n"
+        f"<b>Дата последнего качания:</b> <u>{last_activity_date}</u>\n"
     )
     await message.answer(dealreg_message, parse_mode=ParseMode.HTML)
 
