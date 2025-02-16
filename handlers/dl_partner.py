@@ -21,7 +21,7 @@ async def dl_partner_command(message: Message):
 
     if not user_data:
         await message.answer(
-            "Пожалуйста, авторизуйтесь с помощью команды /start"
+            "⚠️ Пожалуйста, авторизуйтесь с помощью команды /start ⚠️"
         )
         return
 
