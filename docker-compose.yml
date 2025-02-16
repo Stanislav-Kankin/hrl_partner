@@ -1,0 +1,12 @@
+version: '3.8'
+
+services:
+  bot:
+    build: .
+    container_name: part_bot
+    restart: unless-stopped
+    environment:
+      - BOT_TOKEN=${BOT_TOKEN}
+      - BITRIX_WEBHOOK=${BITRIX_WEBHOOK}
+    volumes:
+      - .:/app
