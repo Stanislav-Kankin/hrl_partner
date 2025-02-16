@@ -1,8 +1,7 @@
 from aiogram import Router, F
 from aiogram.types import (
     Message, CallbackQuery,
-    InlineKeyboardMarkup, InlineKeyboardButton
-    )
+    InlineKeyboardMarkup, InlineKeyboardButton)
 from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
@@ -17,6 +16,8 @@ class AdminStates(StatesGroup):
     waiting_for_user_email = State()
     waiting_for_user_phone = State()
     waiting_for_user_partners = State()
+    waiting_for_edit_user = State()
+    waiting_for_delete_user = State()
 
 
 # Главное меню админа с инлайн-кнопками
@@ -28,17 +29,13 @@ async def admin_command(message: Message):
     if any(user.get("id") == user_id and user.get("email") == "admin" for user in USERS.values()):
         keyboard = InlineKeyboardMarkup(inline_keyboard=[
             [InlineKeyboardButton(
-                text="Добавить пользователя",
-                callback_data="add_user")],
+                text="Добавить пользователя", callback_data="add_user")],
             [InlineKeyboardButton(
-                text="Редактировать пользователя",
-                callback_data="edit_user")],
+                text="Редактировать пользователя", callback_data="edit_user")],
             [InlineKeyboardButton(
-                text="Удалить пользователя",
-                callback_data="delete_user")],
+                text="Удалить пользователя", callback_data="delete_user")],
             [InlineKeyboardButton(
-                text="Список пользователей",
-                callback_data="list_users")]
+                text="Список пользователей", callback_data="list_users")]
         ])
         await message.answer(
             "Вы вошли как администратор. Выберите действие:",
@@ -107,21 +104,53 @@ async def process_user_partners(message: Message, state: FSMContext):
 
 @router.callback_query(F.data == "list_users")
 async def list_users_callback(callback: CallbackQuery):
-    users_list = "\n".join(
-        [f"{user['name']} {user['last_name']}" for user in USERS.values()])
+    users_list = "\n".join([f"{user['name']} {user['last_name']}" for user in USERS.values()])
     await callback.message.answer(f"Список пользователей:\n{users_list}")
     await callback.answer()
 
 
 @router.callback_query(F.data == "edit_user")
-async def edit_user_callback(callback: CallbackQuery):
+async def edit_user_callback(callback: CallbackQuery, state: FSMContext):
     await callback.message.answer(
-        "Функция редактирования пользователя в разработке.")
+        "Введите имя пользователя для редактирования:")
+    await state.set_state(AdminStates.waiting_for_edit_user)
     await callback.answer()
+
+
+@router.message(AdminStates.waiting_for_edit_user)
+async def process_edit_user(message: Message, state: FSMContext):
+    user_name = message.text
+
+    # Проверяем, существует ли пользователь
+    if user_name in USERS:
+        await state.update_data(edit_user_name=user_name)
+        await message.answer(
+            f"Редактирование пользователя {user_name}. Введите новые данные.\n"
+            "Введите новое имя:"
+        )
+        await state.set_state(AdminStates.waiting_for_user_name)
+    else:
+        await message.answer("Пользователь не найден.")
+        await state.clear()
 
 
 @router.callback_query(F.data == "delete_user")
-async def delete_user_callback(callback: CallbackQuery):
-    await callback.message.answer(
-        "Функция удаления пользователя в разработке.")
+async def delete_user_callback(callback: CallbackQuery, state: FSMContext):
+    await callback.message.answer("Введите имя пользователя для удаления:")
+    await state.set_state(AdminStates.waiting_for_delete_user)
     await callback.answer()
+
+
+@router.message(AdminStates.waiting_for_delete_user)
+async def process_delete_user(message: Message, state: FSMContext):
+    user_name = message.text
+
+    # Проверяем, существует ли пользователь
+    if user_name in USERS:
+        del USERS[user_name]
+        save_users()
+        await message.answer(f"Пользователь {user_name} успешно удален.")
+    else:
+        await message.answer("Пользователь не найден.")
+
+    await state.clear()

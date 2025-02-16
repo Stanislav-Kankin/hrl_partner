@@ -21,8 +21,8 @@ else:
         "Станислав Канкин": {
             "name": "Станислав",
             "last_name": "Канкин",
-            "email": "stanislav@example.com",
-            "phone_num": "89111234455",
+            "email": "skankin@hr-link.ru",
+            "phone_num": "89898553407",
             "allowed_partners": ["НН"]
         },
         "Иван Иванов": {
