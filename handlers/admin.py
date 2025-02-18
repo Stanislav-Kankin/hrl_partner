@@ -26,7 +26,9 @@ async def admin_command(message: Message):
     user_id = message.from_user.id
 
     # Проверяем, является ли пользователь админом
-    if any(user.get("id") == user_id and user.get("email") == "admin" for user in USERS.values()):
+    if any(
+        user.get("id") == user_id and user.get(
+            "email") == "admin" for user in USERS.values()):
         keyboard = InlineKeyboardMarkup(inline_keyboard=[
             [InlineKeyboardButton(
                 text="Добавить пользователя 🙋‍♂️ 🙋‍♀️",
@@ -135,7 +137,7 @@ async def list_users_callback(callback: CallbackQuery):
 @router.callback_query(F.data == "edit_user")
 async def edit_user_callback(callback: CallbackQuery, state: FSMContext):
     await callback.message.answer(
-        "Введите имя пользователя для редактирования:")
+        "Введите имя и фамилию пользователя для редактирования:")
     await state.set_state(AdminStates.waiting_for_edit_user)
     await callback.answer()
 

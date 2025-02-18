@@ -48,8 +48,7 @@ async def process_dealreg_number(message: Message, state: FSMContext):
     dealreg_info = dealreg_data['result'].get('item', {})
     dealreg_id = dealreg_info.get('id')
     dealreg_stage_id = dealreg_info.get('stageId')  # ID стадии
-    dealreg_previous_stage_id = dealreg_info.get(
-        'previousStageId')  # ID предыдущей стадии
+    dealreg_previous_stage_id = dealreg_info.get('previousStageId')  # ID предыдущей стадии
     dealreg_company = dealreg_info.get('companyId')
     dealreg_created = dealreg_info.get('createdTime')
     dealreg_modified = dealreg_info.get('updatedTime')
@@ -58,13 +57,8 @@ async def process_dealreg_number(message: Message, state: FSMContext):
     # Получаем информацию о компании
     if dealreg_company:
         company_data = await bitrix.get_company_info(dealreg_company)
-        company_name = company_data.get(
-            'result', {}
-        ).get(
-            'TITLE', 'Неизвестно'
-        ) if company_data else 'Неизвестно'
-        dealreg_last_activity = company_data.get(
-            'result', {}).get('LAST_ACTIVITY_TIME')  # Дата последнего качания
+        company_name = company_data.get('result', {}).get('TITLE', 'Неизвестно') if company_data else 'Неизвестно'
+        dealreg_last_activity = company_data.get('result', {}).get('LAST_ACTIVITY_TIME')  # Дата последнего качания
     else:
         company_name = 'Неизвестно'
         dealreg_last_activity = None
@@ -83,76 +77,57 @@ async def process_dealreg_number(message: Message, state: FSMContext):
 
     # Получаем название стадии
     stage_name = stages.get(dealreg_stage_id, 'Неизвестно')
-    previous_stage_name = stages.get(
-        dealreg_previous_stage_id, 'Неизвестно'
-    ) if dealreg_previous_stage_id else 'Неизвестно'
+    previous_stage_name = stages.get(dealreg_previous_stage_id, 'Неизвестно') if dealreg_previous_stage_id else 'Неизвестно'
 
     # Получаем информацию об ответственном за сделку
     responsible_name = 'Не назначен менеджер'
     responsible_email = 'Неизвестно'
     responsible_telegram = 'Неизвестно'
     responsible_position = 'Неизвестно'
-    deal_responsible_for_deal_id = dealreg_info.get(
-        'ufCrm27_1731395822')  # Ответственный за сделку
+    deal_responsible_for_deal_id = dealreg_info.get('ufCrm27_1731395822')  # Ответственный за сделку
 
     if deal_responsible_for_deal_id:
         # Если есть ID ответственного за сделку, получаем его данные
         responsible_data = await bitrix.get_user(deal_responsible_for_deal_id)
         if responsible_data and responsible_data.get('result'):
             responsible_info = responsible_data.get('result', [{}])[0]
-            responsible_name = f"{responsible_info.get(
-                'NAME', 'Неизвестно')} {responsible_info.get(
-                    'LAST_NAME', 'Неизвестно'
-                    )}"
+            responsible_name = f"{responsible_info.get('NAME', 'Неизвестно')} {responsible_info.get('LAST_NAME', 'Неизвестно')}"
             responsible_email = responsible_info.get('EMAIL', 'Неизвестно')
-            responsible_telegram = responsible_info.get(
-                'UF_USR_1665651064433', 'Неизвестно')
-            responsible_position = responsible_info.get(
-                'WORK_POSITION', 'Неизвестно')
+            responsible_telegram = responsible_info.get('UF_USR_1665651064433', 'Неизвестно')
+            responsible_position = responsible_info.get('WORK_POSITION', 'Неизвестно')
     elif dealreg_info.get('assignedById'):
-        responsible_data = await bitrix.get_user(
-            dealreg_info.get('assignedById'))
+        responsible_data = await bitrix.get_user(dealreg_info.get('assignedById'))
         if responsible_data and responsible_data.get('result'):
             responsible_info = responsible_data.get('result', [{}])[0]
-            responsible_name = f"{responsible_info.get(
-                'NAME', 'Неизвестно')} {
-                responsible_info.get('LAST_NAME', 'Неизвестно')}"
+            responsible_name = f"{responsible_info.get('NAME', 'Неизвестно')} {responsible_info.get('LAST_NAME', 'Неизвестно')}"
             responsible_email = responsible_info.get('EMAIL', 'Неизвестно')
-            responsible_telegram = responsible_info.get(
-                'UF_USR_1665651064433', 'Неизвестно')
-            responsible_position = responsible_info.get(
-                'WORK_POSITION', 'Неизвестно')
+            responsible_telegram = responsible_info.get('UF_USR_1665651064433', 'Неизвестно')
+            responsible_position = responsible_info.get('WORK_POSITION', 'Неизвестно')
     elif contact_ids:
         # Если ответственный не назначен, проверяем контакты
         for contact_id in contact_ids:
             contact_data = await bitrix.get_contact_info(contact_id)
             if contact_data and contact_data.get('result'):
                 responsible_info = contact_data.get('result', {})
-                responsible_name = f"{
-                    responsible_info.get(
-                        'NAME', 'Неизвестно')} {
-                    responsible_info.get('LAST_NAME', 'Неизвестно')}"
+                responsible_name = f"{responsible_info.get('NAME', 'Неизвестно')} {responsible_info.get('LAST_NAME', 'Неизвестно')}"
                 responsible_email = responsible_info.get('EMAIL', 'Неизвестно')
-                responsible_telegram = responsible_info.get(
-                    'UF_USR_1665651064433', 'Неизвестно')
-                responsible_position = responsible_info.get(
-                    'WORK_POSITION', 'Неизвестно')
+                responsible_telegram = responsible_info.get('UF_USR_1665651064433', 'Неизвестно')
+                responsible_position = responsible_info.get('WORK_POSITION', 'Неизвестно')
                 break
+
+    # Получаем информацию о касаниях с клиентом
+    touches_data = await bitrix.get_client_touches(dealreg_id)
+    touches_info = []
+    if touches_data and touches_data.get('result'):
+        for touch in touches_data['result']:
+            touch_info = f"{touch.get('CREATED')}: {touch.get('COMMENT')}"
+            touches_info.append(touch_info)
 
     # Форматируем даты
     try:
-        created_date = datetime.fromisoformat(
-            dealreg_created).strftime(
-            '%d.%m.%Y %H:%M'
-        ) if dealreg_created else 'Неизвестно'
-        modified_date = datetime.fromisoformat(
-            dealreg_modified).strftime(
-            '%d.%m.%Y %H:%M'
-        ) if dealreg_modified else 'Неизвестно'
-        last_activity_date = datetime.fromisoformat(
-            dealreg_last_activity).strftime(
-            '%d.%m.%Y %H:%M'
-        ) if dealreg_last_activity else 'Неизвестно'
+        created_date = datetime.fromisoformat(dealreg_created).strftime('%d.%m.%Y %H:%M') if dealreg_created else 'Неизвестно'
+        modified_date = datetime.fromisoformat(dealreg_modified).strftime('%d.%m.%Y %H:%M') if dealreg_modified else 'Неизвестно'
+        last_activity_date = datetime.fromisoformat(dealreg_last_activity).strftime('%d.%m.%Y %H:%M') if dealreg_last_activity else 'Неизвестно'
     except (TypeError, ValueError) as e:
         logger.error(f"Error parsing dates: {e}")
         created_date = 'Неизвестно'
@@ -178,6 +153,14 @@ async def process_dealreg_number(message: Message, state: FSMContext):
         "\n"
         f"<b>Дата последнего касания:</b> <u>{last_activity_date}</u>\n"
     )
+
+    # Добавляем информацию о касаниях с клиентом
+    if touches_info:
+        dealreg_message += "\n<b>Касания с клиентом:</b>\n" + "\n".join(touches_info)
+    else:
+        dealreg_message += "\n<b>Касания с клиентом:</b> Нет данных."
+
     await message.answer(dealreg_message, parse_mode=ParseMode.HTML)
 
     await state.clear()
+

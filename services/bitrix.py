@@ -98,3 +98,12 @@ class BitrixAPI:
             'select': ['STATUS_ID', 'NAME']  # Выбираем ID и название стадий
         })
         return response
+
+    async def get_client_touches(self, deal_id: str) -> Optional[Dict]:
+        """
+        Получает информацию о касаниях с клиентом по ID сделки.
+        """
+        response = await self._call_method('crm.timeline.comment.list', {
+            'filter': {'ENTITY_ID': deal_id, 'ENTITY_TYPE': 'deal'}
+        })
+        return response
