@@ -174,11 +174,11 @@ async def process_dealreg_number(message: Message, state: FSMContext):
         f"<b>Дата последнего касания:</b> <u>{last_activity_date}</u>\n"
     )
 
-    # Добавляем информацию о касаниях с клиентом из DealReg
-    if touches_info:
-        dealreg_message += "\n<b>Касания с клиентом (DealReg):</b>\n" + "\n".join(touches_info)
-    else:
-        dealreg_message += "\n<b>Касания с клиентом (DealReg):</b> Нет данных."
+    # # Добавляем информацию о касаниях с клиентом из DealReg
+    # if touches_info:
+    #     dealreg_message += "\n<b>Касания с клиентом (DealReg):</b>\n" + "\n".join(touches_info)
+    # else:
+    #     dealreg_message += "\n<b>Касания с клиентом (DealReg):</b> Нет данных."
 
     # Добавляем информацию о касаниях с клиентом из сделки
     if deal_touches_info:
