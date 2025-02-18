@@ -8,6 +8,7 @@ from services.bitrix import BitrixAPI
 import os
 import logging
 from datetime import datetime
+import re
 from services.partners import USERS
 
 router = Router()
@@ -134,6 +135,8 @@ async def process_dealreg_number(message: Message, state: FSMContext):
         if deal_touches_data and deal_touches_data.get('result'):
             for touch in deal_touches_data['result']:
                 touch_info = f"{touch.get('CREATED')}: {touch.get('COMMENT')}"
+                # Удаляем HTML-теги
+                touch_info = re.sub(r'<[^>]+>', '', touch_info)
                 deal_touches_info.append(touch_info)
         else:
             logger.error(f"No touches data found for deal ID: {deal_id}")
