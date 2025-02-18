@@ -54,6 +54,9 @@ async def process_dealreg_number(message: Message, state: FSMContext):
     dealreg_modified = dealreg_info.get('updatedTime')
     contact_ids = dealreg_info.get('contactIds', [0])
 
+    # Логируем данные DealReg
+    logger.info(f"DealReg Info: {dealreg_info}")
+
     # Получаем информацию о компании
     if dealreg_company:
         company_data = await bitrix.get_company_info(dealreg_company)
