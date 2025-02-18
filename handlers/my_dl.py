@@ -129,6 +129,7 @@ async def process_dealreg_number(message: Message, state: FSMContext):
                 touch_info = f"{touch.get('CREATED')}: {touch.get('COMMENT')}"
                 # Удаляем HTML-теги
                 touch_info = re.sub(r'<[^>]+>', '', touch_info)
+                touch_info = re.sub(r'\[/?[A-Z]+\]', '', touch_info)
                 deal_touches_info.append(touch_info)
         else:
             logger.error(f"No touches data found for deal ID: {deal_id}")
