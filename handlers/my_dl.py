@@ -61,7 +61,7 @@ async def process_dealreg_number(message: Message, state: FSMContext):
     if dealreg_company:
         company_data = await bitrix.get_company_info(dealreg_company)
         company_name = company_data.get('result', {}).get('TITLE', 'Неизвестно') if company_data else 'Неизвестно'
-        dealreg_last_activity = company_data.get('result', {}).get('LAST_ACTIVITY_TIME')  # Дата последнего качания
+        dealreg_last_activity = company_data.get('result', {}).get('LAST_ACTIVITY_TIME')  # Дата последнего касания
     else:
         company_name = 'Неизвестно'
         dealreg_last_activity = None
@@ -127,7 +127,7 @@ async def process_dealreg_number(message: Message, state: FSMContext):
             touches_info.append(touch_info)
 
     # Получаем информацию о касаниях с клиентом из сделки
-    deal_id = dealreg_info.get('ufCrm27_1731395822')  # Предположим, что ID сделки хранится здесь
+    deal_id = dealreg_info.get('parentId2')  # Используем parentId2 как ID сделки
     if deal_id:
         deal_touches_data = await bitrix.get_deal_touches(deal_id)
         deal_touches_info = []
