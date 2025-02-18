@@ -116,3 +116,19 @@ class BitrixAPI:
             'filter': {'ENTITY_ID': deal_id, 'ENTITY_TYPE': 'deal'}
         })
         return response
+
+    async def get_deal_info(self, deal_id: str) -> Optional[Dict]:
+        """
+        Получает информацию о сделке по её ID.
+        """
+        response = await self._call_method('crm.deal.get', {'id': deal_id})
+        return response
+
+    async def get_client_activities(self, entity_id: str, entity_type: str = 'deal') -> Optional[Dict]:
+        """
+        Получает информацию о касаниях с клиентом по ID сущности (сделки или смарт-процесса).
+        """
+        response = await self._call_method('crm.timeline.activity.list', {
+            'filter': {'ENTITY_ID': entity_id, 'ENTITY_TYPE': entity_type}
+        })
+        return response

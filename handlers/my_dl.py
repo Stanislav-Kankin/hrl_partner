@@ -120,26 +120,26 @@ async def process_dealreg_number(message: Message, state: FSMContext):
                 break
 
     # Получаем информацию о касаниях с клиентом из DealReg
-    touches_data = await bitrix.get_client_touches(dealreg_id)
-    touches_info = []
-    if touches_data and touches_data.get('result'):
-        for touch in touches_data['result']:
-            touch_info = f"{touch.get('CREATED')}: {touch.get('COMMENT')}"
-            touches_info.append(touch_info)
+    activities_data = await bitrix.get_client_activities(dealreg_id, entity_type='dealreg')
+    activities_info = []
+    if activities_data and activities_data.get('result'):
+        for activity in activities_data['result']:
+            activity_info = f"{activity.get('CREATED')}: {activity.get('COMMENT')}"
+            activities_info.append(activity_info)
 
     # Получаем информацию о касаниях с клиентом из сделки
     deal_id = dealreg_info.get('parentId2')  # Используем parentId2 как ID сделки
     if deal_id:
-        deal_touches_data = await bitrix.get_deal_touches(deal_id)
-        deal_touches_info = []
-        if deal_touches_data and deal_touches_data.get('result'):
-            for touch in deal_touches_data['result']:
-                touch_info = f"{touch.get('CREATED')}: {touch.get('COMMENT')}"
+        deal_activities_data = await bitrix.get_client_activities(deal_id, entity_type='deal')
+        deal_activities_info = []
+        if deal_activities_data and deal_activities_data.get('result'):
+            for activity in deal_activities_data['result']:
+                activity_info = f"{activity.get('CREATED')}: {activity.get('COMMENT')}"
                 # Удаляем HTML-теги
-                touch_info = re.sub(r'<[^>]+>', '', touch_info)
-                deal_touches_info.append(touch_info)
+                activity_info = re.sub(r'<[^>]+>', '', activity_info)
+                deal_activities_info.append(activity_info)
         else:
-            logger.error(f"No touches data found for deal ID: {deal_id}")
+            logger.error(f"No activities data found for deal ID: {deal_id}")
     else:
         logger.error("Deal ID not found in DealReg data.")
 
@@ -174,15 +174,15 @@ async def process_dealreg_number(message: Message, state: FSMContext):
         f"<b>Дата последнего касания:</b> <u>{last_activity_date}</u>\n"
     )
 
-    # # Добавляем информацию о касаниях с клиентом из DealReg
-    # if touches_info:
-    #     dealreg_message += "\n<b>Касания с клиентом (DealReg):</b>\n" + "\n".join(touches_info)
-    # else:
-    #     dealreg_message += "\n<b>Касания с клиентом (DealReg):</b> Нет данных."
+    # Добавляем информацию о касаниях с клиентом из DealReg
+    if activities_info:
+        dealreg_message += "\n<b>Касания с клиентом (DealReg):</b>\n" + "\n".join(activities_info)
+    else:
+        dealreg_message += "\n<b>Касания с клиентом (DealReg):</b> Нет данных."
 
     # Добавляем информацию о касаниях с клиентом из сделки
-    if deal_touches_info:
-        dealreg_message += "\n<b>Касания с клиентом (Сделка):</b>\n" + "\n".join(deal_touches_info)
+    if deal_activities_info:
+        dealreg_message += "\n<b>Касания с клиентом (Сделка):</b>\n" + "\n".join(deal_activities_info)
     else:
         dealreg_message += "\n<b>Касания с клиентом (Сделка):</b> Нет данных."
 
