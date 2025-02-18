@@ -119,14 +119,6 @@ async def process_dealreg_number(message: Message, state: FSMContext):
                 responsible_position = responsible_info.get('WORK_POSITION', 'Неизвестно')
                 break
 
-    # Получаем информацию о касаниях с клиентом из DealReg
-    touches_data = await bitrix.get_client_touches(dealreg_id)
-    touches_info = []
-    if touches_data and touches_data.get('result'):
-        for touch in touches_data['result']:
-            touch_info = f"{touch.get('CREATED')}: {touch.get('COMMENT')}"
-            touches_info.append(touch_info)
-
     # Получаем информацию о касаниях с клиентом из сделки
     deal_id = dealreg_info.get('parentId2')  # Используем parentId2 как ID сделки
     if deal_id:
@@ -173,12 +165,6 @@ async def process_dealreg_number(message: Message, state: FSMContext):
         "\n"
         f"<b>Дата последнего касания:</b> <u>{last_activity_date}</u>\n"
     )
-
-    # # Добавляем информацию о касаниях с клиентом из DealReg
-    # if touches_info:
-    #     dealreg_message += "\n<b>Касания с клиентом (DealReg):</b>\n" + "\n".join(touches_info)
-    # else:
-    #     dealreg_message += "\n<b>Касания с клиентом (DealReg):</b> Нет данных."
 
     # Добавляем информацию о касаниях с клиентом из сделки
     if deal_touches_info:
