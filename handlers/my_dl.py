@@ -183,6 +183,13 @@ async def process_dealreg_number(message: Message, state: FSMContext):
     else:
         dealreg_message += "\n<b>Касания с клиентом (Сделка):</b> Нет данных."
 
-    await message.answer(dealreg_message, parse_mode=ParseMode.HTML)
+    # Разбиваем сообщение на части, если оно слишком длинное
+    max_length = 4096  # Максимальная длина сообщения в Telegram
+    if len(dealreg_message) > max_length:
+        messages = [dealreg_message[i:i + max_length] for i in range(0, len(dealreg_message), max_length)]
+        for msg in messages:
+            await message.answer(msg, parse_mode=ParseMode.HTML)
+    else:
+        await message.answer(dealreg_message, parse_mode=ParseMode.HTML)
 
     await state.clear()
