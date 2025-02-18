@@ -124,12 +124,18 @@ async def process_dealreg_number(message: Message, state: FSMContext):
             touches_info.append(touch_info)
 
     # Получаем информацию о касаниях с клиентом из сделки
-    deal_touches_data = await bitrix.get_deal_touches(dealreg_id)
-    deal_touches_info = []
-    if deal_touches_data and deal_touches_data.get('result'):
-        for touch in deal_touches_data['result']:
-            touch_info = f"{touch.get('CREATED')}: {touch.get('COMMENT')}"
-            deal_touches_info.append(touch_info)
+    deal_id = dealreg_info.get('ufCrm27_1731395822')  # Предположим, что ID сделки хранится здесь
+    if deal_id:
+        deal_touches_data = await bitrix.get_deal_touches(deal_id)
+        deal_touches_info = []
+        if deal_touches_data and deal_touches_data.get('result'):
+            for touch in deal_touches_data['result']:
+                touch_info = f"{touch.get('CREATED')}: {touch.get('COMMENT')}"
+                deal_touches_info.append(touch_info)
+        else:
+            logger.error(f"No touches data found for deal ID: {deal_id}")
+    else:
+        logger.error("Deal ID not found in DealReg data.")
 
     # Форматируем даты
     try:
@@ -177,4 +183,3 @@ async def process_dealreg_number(message: Message, state: FSMContext):
     await message.answer(dealreg_message, parse_mode=ParseMode.HTML)
 
     await state.clear()
-
