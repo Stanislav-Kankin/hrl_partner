@@ -140,12 +140,11 @@ async def process_dealreg_number(message: Message, state: FSMContext):
     try:
         created_date = datetime.fromisoformat(dealreg_created).strftime('%d.%m.%Y %H:%M') if dealreg_created else 'Неизвестно'
         modified_date = datetime.fromisoformat(dealreg_modified).strftime('%d.%m.%Y %H:%M') if dealreg_modified else 'Неизвестно'
-        last_activity_date = datetime.fromisoformat(dealreg_last_activity).strftime('%d.%m.%Y %H:%M') if dealreg_last_activity else 'Неизвестно'
     except (TypeError, ValueError) as e:
         logger.error(f"Error parsing dates: {e}")
         created_date = 'Неизвестно'
         modified_date = 'Неизвестно'
-        last_activity_date = 'Неизвестно'
+        # last_activity_date = 'Неизвестно'
 
     # Формируем сообщение
     dealreg_message = (
@@ -164,7 +163,7 @@ async def process_dealreg_number(message: Message, state: FSMContext):
         f"<b>Дата создания:</b> {created_date}\n"
         f"<b>Дата изменения:</b> {modified_date}\n"
         "\n"
-        f"<b>Дата последнего касания:</b> <u>{last_activity_date}</u>\n"
+        # f"<b>Дата последнего касания:</b> <u>{last_activity_date}</u>\n"
     )
 
     # Добавляем информацию о касаниях с клиентом из сделки
