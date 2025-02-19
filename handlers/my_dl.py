@@ -49,7 +49,7 @@ async def process_dealreg_number(message: Message, state: FSMContext):
     dealreg_info = dealreg_data['result'].get('item', {})
     dealreg_id = dealreg_info.get('id')
     dealreg_stage_id = dealreg_info.get('stageId')  # ID стадии
-    dealreg_previous_stage_id = dealreg_info.get('previousStageId')  # ID предыдущей стадии
+    dealreg_previous_stage_id = dealreg_info.get('previousStageId')
     dealreg_company = dealreg_info.get('companyId')
     dealreg_created = dealreg_info.get('createdTime')
     dealreg_modified = dealreg_info.get('updatedTime')
@@ -62,10 +62,8 @@ async def process_dealreg_number(message: Message, state: FSMContext):
     if dealreg_company:
         company_data = await bitrix.get_company_info(dealreg_company)
         company_name = company_data.get('result', {}).get('TITLE', 'Неизвестно') if company_data else 'Неизвестно'
-        dealreg_last_activity = company_data.get('result', {}).get('LAST_ACTIVITY_TIME')  # Дата последнего касания
     else:
         company_name = 'Неизвестно'
-        dealreg_last_activity = None
 
     # Ручное сопоставление стадий
     stages = {
@@ -144,7 +142,6 @@ async def process_dealreg_number(message: Message, state: FSMContext):
         logger.error(f"Error parsing dates: {e}")
         created_date = 'Неизвестно'
         modified_date = 'Неизвестно'
-        # last_activity_date = 'Неизвестно'
 
     # Формируем сообщение
     dealreg_message = (
@@ -163,7 +160,6 @@ async def process_dealreg_number(message: Message, state: FSMContext):
         f"<b>Дата создания:</b> {created_date}\n"
         f"<b>Дата изменения:</b> {modified_date}\n"
         "\n"
-        # f"<b>Дата последнего касания:</b> <u>{last_activity_date}</u>\n"
     )
 
     # Добавляем информацию о касаниях с клиентом из сделки
