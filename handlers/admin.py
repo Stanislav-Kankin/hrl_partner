@@ -37,9 +37,6 @@ async def admin_command(message: Message):
                 text="Редактировать пользователя 🖋️ ",
                 callback_data="edit_user")],
             [InlineKeyboardButton(
-                text="Удалить пользователя ❌ ",
-                callback_data="delete_user")],
-            [InlineKeyboardButton(
                 text="Список пользователей 🗂️",
                 callback_data="list_users")]
         ])
@@ -132,31 +129,6 @@ async def list_users_callback(callback: CallbackQuery):
 
     await callback.message.answer(response, parse_mode="HTML")
     await callback.answer()
-
-
-@router.callback_query(F.data == "edit_user")
-async def edit_user_callback(callback: CallbackQuery, state: FSMContext):
-    await callback.message.answer(
-        "Введите имя и фамилию пользователя для редактирования:")
-    await state.set_state(AdminStates.waiting_for_edit_user)
-    await callback.answer()
-
-
-@router.message(AdminStates.waiting_for_edit_user)
-async def process_edit_user(message: Message, state: FSMContext):
-    user_name = message.text
-
-    # Проверяем, существует ли пользователь
-    if user_name in USERS:
-        await state.update_data(edit_user_name=user_name)
-        await message.answer(
-            f"Редактирование пользователя {user_name}. Введите новые данные.\n"
-            "Введите новое имя:"
-        )
-        await state.set_state(AdminStates.waiting_for_user_name)
-    else:
-        await message.answer("Пользователь не найден.")
-        await state.clear()
 
 
 @router.callback_query(F.data == "delete_user")
