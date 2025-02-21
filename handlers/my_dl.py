@@ -152,10 +152,10 @@ async def process_dealreg_number(message: Message, state: FSMContext):
         f"<b>Текущая стадия:</b> <u>{stage_name}</u>\n"
         f"<b>Предыдущая стадия:</b> {previous_stage_name}\n"
         "\n"
-        f"<b>Ответственный за сделку:</b> {responsible_name} 👤\n"
-        f"<b>Должность:</b> {responsible_position} 🤝\n"
-        f"<b>Email:</b> <code>{responsible_email}</code>📧\n"
-        f"<b>Telegram:</b> <code>{responsible_telegram}</code> 📞\n"
+        f"👤 <b>Ответственный за сделку:</b> {responsible_name}\n"
+        f"🤝 <b>Должность:</b> {responsible_position}\n"
+        f"📧 <b>Email:</b> <code>{responsible_email}</code>\n"
+        f"📞<b>Telegram:</b> <code>{responsible_telegram}</code>\n"
         "\n"
         f"<b>Дата создания:</b> {created_date}\n"
         f"<b>Дата изменения:</b> {modified_date}\n"
@@ -174,7 +174,7 @@ async def process_dealreg_number(message: Message, state: FSMContext):
     if len(dealreg_message) > max_length:
         messages = [dealreg_message[i:i + max_length] for i in range(0, len(dealreg_message), max_length)]
         for msg in messages:
-            await message.answer(msg, parse_mode=ParseMode.HTML)
+            await message.answer(msg, parse_mode=ParseMode.HTML)text
     else:
         await message.answer(dealreg_message, parse_mode=ParseMode.HTML)
 

@@ -122,5 +122,4 @@ class BitrixAPI:
         Получает информацию о сделке по её ID.
         """
         response = await self._call_method('crm.deal.get', {'id': deal_id})
-        print(response)
         return response
