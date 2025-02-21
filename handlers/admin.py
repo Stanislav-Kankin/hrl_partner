@@ -34,8 +34,8 @@ async def admin_command(message: Message):
                 text="Добавить пользователя 🙋‍♂️ 🙋‍♀️",
                 callback_data="add_user")],
             [InlineKeyboardButton(
-                text="Редактировать пользователя 🖋️ ",
-                callback_data="edit_user")],
+                text="Удалить пользователя ❌ ",
+                callback_data="delete_user")],
             [InlineKeyboardButton(
                 text="Список пользователей 🗂️",
                 callback_data="list_users")]
