@@ -78,7 +78,7 @@ async def process_phone(message: Message, state: FSMContext):
             await message.answer("✅<b>Авторизация успешна!</b>✅")
             await message.answer(
                 "/dl_partner - <u>для подачи заявки на DealReg</u> 📄 \n"
-                "/my_dl для - <u>запроса статуса заявки.</u> 💡"
+                "/my_dl - <u>для запроса статуса заявки.</u> 💡"
             )
         else:
             await message.answer(
