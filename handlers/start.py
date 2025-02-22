@@ -51,7 +51,7 @@ async def process_last_name(message: Message, state: FSMContext):
 async def process_email(message: Message, state: FSMContext):
     await state.update_data(email=message.text)
     await message.answer(
-        "Укажите <b>номер сотового телефона<b>"
+        "Укажите <b>номер сотового телефона</b>"
         " <u>в формате 89111234455</u> 📞"
     )
     await state.set_state(AuthStates.waiting_for_phone)
