@@ -171,3 +171,4 @@ cython_debug/
 .pypirc
 *partners.db
 users.json
+test.py
