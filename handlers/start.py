@@ -24,25 +24,26 @@ async def start_command(message: Message, state: FSMContext):
         await message.answer(
             "Добро пожаловать! 🚀\n"
             "<b>Используйте команды ниже для работы в боте:</b>\n"
-            "/dl_partner для подачи заявки на DealReg. 📄\n"
-            "/my_dl для запроса статуса заявки. 💡"
+            "\n"
+            "/dl_partner - <u>для подачи заявки на DealReg.</u> 📄\n"
+            "/my_dl - <u>для запроса статуса заявки.</u> 💡"
         )
     else:
-        await message.answer("Авторизуйтесь, пришлите своё Имя 👤")
+        await message.answer("Авторизуйтесь, пришлите своё <b>Имя</b> 👤")
         await state.set_state(AuthStates.waiting_for_name)
 
 
 @router.message(AuthStates.waiting_for_name)
 async def process_name(message: Message, state: FSMContext):
     await state.update_data(name=message.text)
-    await message.answer("Теперь пришлите свою Фамилию 👤")
+    await message.answer("Теперь пришлите свою <b>Фамилию</b> 👤")
     await state.set_state(AuthStates.waiting_for_last_name)
 
 
 @router.message(AuthStates.waiting_for_last_name)
 async def process_last_name(message: Message, state: FSMContext):
     await state.update_data(last_name=message.text)
-    await message.answer("Укажите Вашу рабочую почту 📧")
+    await message.answer("Укажите Вашу <b>рабочую почту</b> 📧")
     await state.set_state(AuthStates.waiting_for_email)
 
 
@@ -50,7 +51,8 @@ async def process_last_name(message: Message, state: FSMContext):
 async def process_email(message: Message, state: FSMContext):
     await state.update_data(email=message.text)
     await message.answer(
-        "Укажите номер сотового телефона в формате 89111234455 📞"
+        "Укажите <b>номер сотового телефона<b>"
+        " <u>в формате 89111234455</u> 📞"
     )
     await state.set_state(AuthStates.waiting_for_phone)
 
@@ -73,16 +75,16 @@ async def process_phone(message: Message, state: FSMContext):
             # Добавляем ID пользователя в данные
             USERS[full_name]['id'] = user_id
 
-            await message.answer("✅Авторизация успешна!✅")
+            await message.answer("✅<b>Авторизация успешна!<b/>✅")
             await message.answer(
-                "Используйте /dl_partner для подачи заявки на DealReg, "
-                "или /my_dl для запроса статуса заявки. 🛠️"
+                "/dl_partner - <u>для подачи заявки на DealReg</u> 📄 "
+                "/my_dl для - <u>запроса статуса заявки.</u> 💡"
             )
         else:
             await message.answer(
-                "⚠️Неверная почта или телефон. Авторизация не удалась.⚠️"
+                "⚠️<b>Неверная почта или телефон. Авторизация не удалась.</b>⚠️"
                 )
     else:
-        await message.answer("⚠️Не удалось провести авторизацию.⚠️")
+        await message.answer("⚠️<b>Не удалось провести авторизацию.</b>⚠️")
 
     await state.clear()
