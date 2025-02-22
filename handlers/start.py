@@ -75,7 +75,7 @@ async def process_phone(message: Message, state: FSMContext):
             # Добавляем ID пользователя в данные
             USERS[full_name]['id'] = user_id
 
-            await message.answer("✅<b>Авторизация успешна!<b/>✅")
+            await message.answer("✅<b>Авторизация успешна!</b>✅")
             await message.answer(
                 "/dl_partner - <u>для подачи заявки на DealReg</u> 📄 "
                 "/my_dl для - <u>запроса статуса заявки.</u> 💡"
