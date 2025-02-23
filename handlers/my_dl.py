@@ -118,7 +118,8 @@ async def process_dealreg_number(message: Message, state: FSMContext):
                 break
 
     # Получаем информацию о касаниях с клиентом из сделки
-    deal_id = dealreg_info.get('parentId2')  # Используем parentId2 как ID сделки
+    deal_touches_info = []
+    deal_id = dealreg_info.get('parentId2')
     if deal_id:
         deal_touches_data = await bitrix.get_deal_touches(deal_id)
         deal_touches_info = []
