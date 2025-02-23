@@ -174,7 +174,7 @@ async def process_dealreg_number(message: Message, state: FSMContext):
     if len(dealreg_message) > max_length:
         messages = [dealreg_message[i:i + max_length] for i in range(0, len(dealreg_message), max_length)]
         for msg in messages:
-            await message.answer(msg, parse_mode=ParseMode.HTML).text
+            await message.answer(msg, parse_mode=ParseMode.HTML)
     else:
         await message.answer(dealreg_message, parse_mode=ParseMode.HTML)
 
