@@ -82,7 +82,8 @@ async def process_phone(message: Message, state: FSMContext):
             )
         else:
             await message.answer(
-                "⚠️<b>Неверная почта или телефон. Авторизация не удалась.</b>⚠️"
+                "⚠️<b>Неверная почта или телефон.</b>"
+                "<b>Авторизация не удалась.</b>⚠️"
                 )
     else:
         await message.answer("⚠️<b>Не удалось провести авторизацию.</b>⚠️")
