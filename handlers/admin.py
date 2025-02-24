@@ -50,7 +50,7 @@ async def admin_command(message: Message):
 # Обработка инлайн-кнопок
 @router.callback_query(F.data == "add_user")
 async def add_user_callback(callback: CallbackQuery, state: FSMContext):
-    await callback.message.answer("Введите имя нового пользователя:")
+    await callback.message.answer("Введите <b><u>имя</u></b> нового пользователя:")
     await state.set_state(AdminStates.waiting_for_user_name)
     await callback.answer()
 
@@ -58,28 +58,28 @@ async def add_user_callback(callback: CallbackQuery, state: FSMContext):
 @router.message(AdminStates.waiting_for_user_name)
 async def process_user_name(message: Message, state: FSMContext):
     await state.update_data(name=message.text)
-    await message.answer("Введите фамилию нового пользователя:")
+    await message.answer("Введите <b><u>фамилию</u></b> нового пользователя:")
     await state.set_state(AdminStates.waiting_for_user_last_name)
 
 
 @router.message(AdminStates.waiting_for_user_last_name)
 async def process_user_last_name(message: Message, state: FSMContext):
     await state.update_data(last_name=message.text)
-    await message.answer("Введите рабочую почту нового пользователя:")
+    await message.answer("Введите <b><u>рабочую почту</u></b> нового пользователя:")
     await state.set_state(AdminStates.waiting_for_user_email)
 
 
 @router.message(AdminStates.waiting_for_user_email)
 async def process_user_email(message: Message, state: FSMContext):
     await state.update_data(email=message.text)
-    await message.answer("Введите рабочий телефон нового пользователя:")
+    await message.answer("Введите <b><u>рабочий телефон</u></b> нового пользователя:")
     await state.set_state(AdminStates.waiting_for_user_phone)
 
 
 @router.message(AdminStates.waiting_for_user_phone)
 async def process_user_phone(message: Message, state: FSMContext):
     await state.update_data(phone=message.text)
-    await message.answer("Введите список партнеров через запятую:")
+    await message.answer("Введите <b><u>список партнеров</u></b> через запятую:")
     await state.set_state(AdminStates.waiting_for_user_partners)
 
 
