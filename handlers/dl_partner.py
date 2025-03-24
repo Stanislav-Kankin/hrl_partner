@@ -8,7 +8,7 @@ from services.partners import USERS, PARTNERS
 router = Router()
 
 
-@router.message(Command("dl_partner"))
+@router.message(Command("dr_partner"))
 async def dl_partner_command(message: Message):
     user_id = message.from_user.id
 

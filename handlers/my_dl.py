@@ -19,7 +19,7 @@ class MyDealReg(StatesGroup):
     waiting_for_dealreg_number = State()
 
 
-@router.message(Command("my_dl"))
+@router.message(Command("my_dr"))
 async def my_dl_command(message: Message, state: FSMContext):
     user_id = message.from_user.id
 
