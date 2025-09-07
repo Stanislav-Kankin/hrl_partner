@@ -19,23 +19,142 @@ class MyDealReg(StatesGroup):
     waiting_for_dealreg_number = State()
 
 
+def is_user_admin(user_id: int) -> bool:
+    """
+    Проверяет, является ли пользователь администратором
+    """
+    for user in USERS.values():
+        if user.get("id") == user_id:
+            user_email = user.get("email", "").lower()
+            return user_email == "admin" or "admin" in user_email
+    return False
+
+
+async def get_partner_email_from_dealreg(dealreg_info: dict, bitrix: BitrixAPI) -> str:
+    """
+    Получает email партнера из контакта DealReg.
+    """
+    contact_id = dealreg_info.get('contactId')
+    if not contact_id:
+        logger.warning("No contact ID found in DealReg")
+        return 'Неизвестно'
+
+    logger.info(f"Getting contact info for ID: {contact_id}")
+
+    # Получаем информацию о контакте
+    contact_data = await bitrix.get_contact_info(contact_id)
+    if not contact_data or not contact_data.get('result'):
+        logger.warning(f"No contact data found for ID: {contact_id}")
+        return 'Неизвестно'
+
+    contact_info = contact_data['result']
+    logger.info(f"Full contact info: {contact_info}")  # Логируем всю информацию о контакте
+
+    # Ищем email в стандартных полях
+    email_list = contact_info.get('EMAIL', [])
+    email = email_list[0]['VALUE'] if email_list else None
+    if email:
+        logger.info(f"Found partner email in contact: {email}")
+        return email
+
+    # Ищем email в пользовательских полях
+    for field_name, field_value in contact_info.items():
+        if field_name.startswith('UF_') and field_value and isinstance(field_value, str) and '@' in field_value:
+            if re.match(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$', field_value):
+                logger.info(f"Found partner email in custom field {field_name}: {field_value}")
+                return field_value
+
+    logger.warning("No partner email found in contact")
+    return 'Неизвестно'
+
+
+async def check_dealreg_access(user_email: str, dealreg_info: dict, bitrix: BitrixAPI) -> bool:
+    """
+    Проверяет доступ пользователя к DealReg по email партнера или по создателю/ответственному.
+    """
+    logger.info(f"Checking access for user: {user_email}")
+
+    # 1. Админ всегда имеет доступ
+    if user_email.lower() == "admin":
+        logger.info("Access granted: User is admin")
+        return True
+
+    # 2. Получаем email партнёра
+    partner_email = await get_partner_email_from_dealreg(dealreg_info, bitrix)
+    logger.info(f"Partner email from DealReg: {partner_email}")
+
+    # 3. Если email партнёра не найден, проверяем, является ли пользователь создателем/ответственным
+    if partner_email == 'Неизвестно':
+        logger.info("Partner email is unknown. Checking if user is creator or responsible.")
+
+        # Проверяем, является ли пользователь создателем DealReg
+        created_by_id = dealreg_info.get('createdById')
+        if created_by_id:
+            created_by_data = await bitrix.get_user(created_by_id)
+            if created_by_data and created_by_data.get('result'):
+                created_by_email = created_by_data['result'][0].get('EMAIL', '').lower()
+                logger.info(f"DealReg creator email: {created_by_email}")
+                if created_by_email == user_email.lower():
+                    logger.info("Access granted: User is the creator of DealReg")
+                    return True
+
+        # Проверяем, является ли пользователь ответственным за DealReg
+        assigned_by_id = dealreg_info.get('assignedById')
+        if assigned_by_id:
+            assigned_by_data = await bitrix.get_user(assigned_by_id)
+            if assigned_by_data and assigned_by_data.get('result'):
+                assigned_by_email = assigned_by_data['result'][0].get('EMAIL', '').lower()
+                logger.info(f"DealReg responsible email: {assigned_by_email}")
+                if assigned_by_email == user_email.lower():
+                    logger.info("Access granted: User is responsible for DealReg")
+                    return True
+
+        logger.warning("Access denied: User is neither partner, nor creator, nor responsible")
+        return False
+
+    # 4. Сравниваем email пользователя с email партнёра
+    access_granted = user_email.lower() == partner_email.lower() if isinstance(partner_email, str) else False
+
+    if access_granted:
+        logger.info(f"Access granted: User email {user_email} matches partner email {partner_email}")
+    else:
+        logger.warning(f"Access denied: User email {user_email} != partner email {partner_email}")
+
+    return access_granted
+
+
+
 @router.message(Command("my_dr"))
 async def my_dl_command(message: Message, state: FSMContext):
     user_id = message.from_user.id
 
-    # Проверяем, авторизован ли пользователь
-    if not any(user.get("id") == user_id for user in USERS.values()):
-        await message.answer(
-            "⚠️ Пожалуйста, авторизуйтесь с помощью команды /start ⚠️")
+    # Проверяем, авторизован ли пользователь и получаем его email
+    user_email = None
+    for user in USERS.values():
+        if user.get("id") == user_id:
+            user_email = user.get("email")
+            break
+
+    if not user_email:
+        await message.answer("⚠️ Пожалуйста, авторизуйтесь с помощью команды /start ⚠️")
         return
 
+    # Сохраняем email пользователя и флаг админа в состоянии
+    await state.update_data(
+        user_email=user_email,
+        is_admin=is_user_admin(user_id)
+    )
     await message.answer("Введите номер DealReg:")
     await state.set_state(MyDealReg.waiting_for_dealreg_number)
 
 
 @router.message(MyDealReg.waiting_for_dealreg_number)
 async def process_dealreg_number(message: Message, state: FSMContext):
-    dealreg_number = message.text
+    dealreg_number = message.text.strip()
+    state_data = await state.get_data()
+    user_email = state_data.get('user_email')
+    is_admin = state_data.get('is_admin', False)
+    
     bitrix = BitrixAPI(os.getenv("BITRIX_WEBHOOK"))
 
     # Пытаемся найти DealReg по ID
@@ -47,16 +166,30 @@ async def process_dealreg_number(message: Message, state: FSMContext):
         return
 
     dealreg_info = dealreg_data['result'].get('item', {})
+    
+    # Если пользователь не админ - проверяем доступ
+    if not is_admin:
+        has_access = await check_dealreg_access(user_email, dealreg_info, bitrix)
+        if not has_access:
+            # Получаем email партнера для информационного сообщения
+            partner_email = await get_partner_email_from_dealreg(dealreg_info, bitrix)
+            await message.answer(
+                f"❌ У вас нет доступа для просмотра этого DealReg.\n"
+                f"👤 Ваш email: {user_email}\n"
+                f"📧 Ответственный партнер: {partner_email}\n"
+                f"Обратитесь к администратору для получения доступа."
+            )
+            await state.clear()
+            return
+
+    # Если доступ есть (либо пользователь админ), продолжаем обработку...
     dealreg_id = dealreg_info.get('id')
-    dealreg_stage_id = dealreg_info.get('stageId')  # ID стадии
+    dealreg_stage_id = dealreg_info.get('stageId')
     dealreg_previous_stage_id = dealreg_info.get('previousStageId')
     dealreg_company = dealreg_info.get('companyId')
     dealreg_created = dealreg_info.get('createdTime')
     dealreg_modified = dealreg_info.get('updatedTime')
-    contact_ids = dealreg_info.get('contactIds', [0])
-
-    # Логируем данные DealReg
-    logger.info(f"DealReg Info: {dealreg_info}")
+    contact_ids = dealreg_info.get('contactIds', [])
 
     # Получаем информацию о компании
     if dealreg_company:
@@ -106,57 +239,31 @@ async def process_dealreg_number(message: Message, state: FSMContext):
     responsible_email = 'Неизвестно'
     responsible_telegram = 'Неизвестно'
     responsible_position = 'Неизвестно'
+    
     # Ответственный за сделку
     deal_responsible_for_deal_id = dealreg_info.get('ufCrm27_1731395822')
-
     if deal_responsible_for_deal_id:
-        # Если есть ID ответственного за сделку, получаем его данные
         responsible_data = await bitrix.get_user(deal_responsible_for_deal_id)
         if responsible_data and responsible_data.get('result'):
             responsible_info = responsible_data.get('result', [{}])[0]
-            responsible_name = f"{responsible_info.get(
-                'NAME', 'Неизвестно')} {responsible_info.get(
-                    'LAST_NAME', 'Неизвестно')}"
+            responsible_name = f"{responsible_info.get('NAME', 'Неизвестно')} {responsible_info.get('LAST_NAME', 'Неизвестно')}"
             responsible_email = responsible_info.get('EMAIL', 'Неизвестно')
-            responsible_telegram = responsible_info.get(
-                'UF_USR_1665651064433', 'Неизвестно')
-            responsible_position = responsible_info.get(
-                'WORK_POSITION', 'Неизвестно')
+            responsible_telegram = responsible_info.get('UF_USR_1665651064433', 'Неизвестно')
+            responsible_position = responsible_info.get('WORK_POSITION', 'Неизвестно')
     elif dealreg_info.get('assignedById'):
-        responsible_data = await bitrix.get_user(
-            dealreg_info.get('assignedById'))
+        responsible_data = await bitrix.get_user(dealreg_info.get('assignedById'))
         if responsible_data and responsible_data.get('result'):
             responsible_info = responsible_data.get('result', [{}])[0]
-            responsible_name = f"{responsible_info.get(
-                'NAME', 'Неизвестно')} {
-                    responsible_info.get('LAST_NAME', 'Неизвестно')}"
+            responsible_name = f"{responsible_info.get('NAME', 'Неизвестно')} {responsible_info.get('LAST_NAME', 'Неизвестно')}"
             responsible_email = responsible_info.get('EMAIL', 'Неизвестно')
-            responsible_telegram = responsible_info.get(
-                'UF_USR_1665651064433', 'Неизвестно')
-            responsible_position = responsible_info.get(
-                'WORK_POSITION', 'Неизвестно')
-    elif contact_ids:
-        # Если ответственный не назначен, проверяем контакты
-        for contact_id in contact_ids:
-            contact_data = await bitrix.get_contact_info(contact_id)
-            if contact_data and contact_data.get('result'):
-                responsible_info = contact_data.get('result', {})
-                responsible_name = f"{responsible_info.get(
-                    'NAME', 'Неизвестно'
-                    )} {responsible_info.get('LAST_NAME', 'Неизвестно')}"
-                responsible_email = responsible_info.get('EMAIL', 'Неизвестно')
-                responsible_telegram = responsible_info.get(
-                    'UF_USR_1665651064433', 'Неизвестно')
-                responsible_position = responsible_info.get(
-                    'WORK_POSITION', 'Неизвестно')
-                break
+            responsible_telegram = responsible_info.get('UF_USR_1665651064433', 'Неизвестno')
+            responsible_position = responsible_info.get('WORK_POSITION', 'Неизвестно')
 
     # Получаем информацию о касаниях с клиентом из сделки
     deal_touches_info = []
     deal_id = dealreg_info.get('parentId2')
     if deal_id:
         deal_touches_data = await bitrix.get_deal_touches(deal_id)
-        deal_touches_info = []
         if deal_touches_data and deal_touches_data.get('result'):
             for touch in deal_touches_data['result']:
                 touch_info = f"{touch.get('CREATED')}: {touch.get('COMMENT')}"
@@ -164,23 +271,18 @@ async def process_dealreg_number(message: Message, state: FSMContext):
                 touch_info = re.sub(r'<[^>]+>', '', touch_info)
                 touch_info = re.sub(r'\[/?[A-Z]+\]', '', touch_info)
                 deal_touches_info.append(touch_info)
-        else:
-            logger.error(f"No touches data found for deal ID: {deal_id}")
-    else:
-        logger.error("Deal ID not found in DealReg data.")
 
     # Форматируем даты
     try:
-        created_date = datetime.fromisoformat(
-            dealreg_created
-            ).strftime('%d.%m.%Y %H:%M') if dealreg_created else 'Неизвестно'
-        modified_date = datetime.fromisoformat(
-            dealreg_modified
-            ).strftime('%d.%m.%Y %H:%M') if dealreg_modified else 'Неизвестно'
+        created_date = datetime.fromisoformat(dealreg_created).strftime('%d.%m.%Y %H:%M') if dealreg_created else 'Неизвестно'
+        modified_date = datetime.fromisoformat(dealreg_modified).strftime('%d.%m.%Y %H:%M') if dealreg_modified else 'Неизвестно'
     except (TypeError, ValueError) as e:
         logger.error(f"Error parsing dates: {e}")
-        created_date = 'Неизвестно'
+        created_date = 'Неизвестno'
         modified_date = 'Неизвестно'
+
+    # Добавляем пометку для админа
+    admin_note = "\n👑 <b>Просмотрено администратором</b>\n" if is_admin else ""
 
     # Формируем сообщение
     dealreg_message = (
@@ -198,21 +300,20 @@ async def process_dealreg_number(message: Message, state: FSMContext):
         "\n"
         f"<b>Дата создания:</b> {created_date}\n"
         f"<b>Дата изменения:</b> {modified_date}\n"
+        f"{admin_note}"
         "\n"
     )
 
     # Добавляем информацию о касаниях с клиентом из сделки
     if deal_touches_info:
-        dealreg_message += "\n<b>Касания с клиентом (Сделка):</b>\n" + "\n".join(deal_touches_info)
-        print(deal_touches_info)
+        dealreg_message += "\n<b>Касания с клиентом (Сделка):</b>\n" + "\n".join(deal_touches_info[:5])
     else:
         dealreg_message += "\n<b>Касания с клиентом (Сделка):</b> Нет данных."
 
     # Разбиваем сообщение на части, если оно слишком длинное
-    max_length = 4096  # Максимальная длина сообщения в Telegram
+    max_length = 4096
     if len(dealreg_message) > max_length:
-        messages = [dealreg_message[i:i + max_length] for i in range(
-            0, len(dealreg_message), max_length)]
+        messages = [dealreg_message[i:i + max_length] for i in range(0, len(dealreg_message), max_length)]
         for msg in messages:
             await message.answer(msg, parse_mode=ParseMode.HTML)
     else:

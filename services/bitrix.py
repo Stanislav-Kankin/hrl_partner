@@ -123,3 +123,13 @@ class BitrixAPI:
         """
         response = await self._call_method('crm.deal.get', {'id': deal_id})
         return response
+    
+    async def get_contact_info(self, contact_id: int) -> Optional[Dict]:
+        """
+        Получает информацию о контакте по его ID.
+        """
+        response = await self._call_method('crm.contact.get', {'id': contact_id})
+        if response is None:
+            logger.error(f"Failed to retrieve contact data for ID: {contact_id}")
+        return response
+
