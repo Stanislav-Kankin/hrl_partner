@@ -133,3 +133,24 @@ class BitrixAPI:
             logger.error(f"Failed to retrieve contact data for ID: {contact_id}")
         return response
 
+
+    async def get_deal_client_touches(self, deal_id: str) -> Optional[Dict]:
+        """
+        Получает информацию о касаниях с клиентом из кастомной сущности (ID: 190)
+        """
+        try:
+            response = await self._call_method('crm.item.list', {
+                'entityTypeId': 190,
+                'filter': {'parentId2': deal_id},
+                'select': ['id', 'title', 'ufCrm45_1663423811', 'createdTime', 'assignedById']
+            })
+            
+            if response and response.get('result'):
+                logger.info(f"Found {len(response['result']['items'])} client touches for deal {deal_id}")
+            else:
+                logger.info(f"No client touches found for deal {deal_id}")
+                
+            return response
+        except Exception as e:
+            logger.error(f"Error getting client touches: {e}")
+            return None

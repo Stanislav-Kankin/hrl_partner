@@ -1,5 +1,8 @@
-from aiogram import Router
-from aiogram.types import Message
+from aiogram import Router, F
+from aiogram.types import (
+    Message, InlineKeyboardMarkup,
+    InlineKeyboardButton, CallbackQuery
+    )
 from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
@@ -10,6 +13,7 @@ import logging
 from datetime import datetime
 import re
 from services.partners import USERS
+import asyncio
 
 router = Router()
 logger = logging.getLogger(__name__)
@@ -17,6 +21,10 @@ logger = logging.getLogger(__name__)
 
 class MyDealReg(StatesGroup):
     waiting_for_dealreg_number = State()
+
+
+class TouchStates(StatesGroup):
+    waiting_for_touch_deal_id = State()
 
 
 def is_user_admin(user_id: int) -> bool:
@@ -30,7 +38,8 @@ def is_user_admin(user_id: int) -> bool:
     return False
 
 
-async def get_partner_email_from_dealreg(dealreg_info: dict, bitrix: BitrixAPI) -> str:
+async def get_partner_email_from_dealreg(
+        dealreg_info: dict, bitrix: BitrixAPI) -> str:
     """
     Получает email партнера из контакта DealReg.
     """
@@ -48,7 +57,7 @@ async def get_partner_email_from_dealreg(dealreg_info: dict, bitrix: BitrixAPI) 
         return 'Неизвестно'
 
     contact_info = contact_data['result']
-    logger.info(f"Full contact info: {contact_info}")  # Логируем всю информацию о контакте
+    logger.info(f"Full contact info: {contact_info}")
 
     # Ищем email в стандартных полях
     email_list = contact_info.get('EMAIL', [])
@@ -123,7 +132,6 @@ async def check_dealreg_access(user_email: str, dealreg_info: dict, bitrix: Bitr
     return access_granted
 
 
-
 @router.message(Command("my_dr"))
 async def my_dl_command(message: Message, state: FSMContext):
     user_id = message.from_user.id
@@ -150,27 +158,29 @@ async def my_dl_command(message: Message, state: FSMContext):
 
 @router.message(MyDealReg.waiting_for_dealreg_number)
 async def process_dealreg_number(message: Message, state: FSMContext):
+    # Отправляем временное сообщение
+    temp_message = await message.answer("⏳Собираю информацию, ожидайте...⏳")
+
     dealreg_number = message.text.strip()
     state_data = await state.get_data()
     user_email = state_data.get('user_email')
     is_admin = state_data.get('is_admin', False)
-    
-    bitrix = BitrixAPI(os.getenv("BITRIX_WEBHOOK"))
 
+    bitrix = BitrixAPI(os.getenv("BITRIX_WEBHOOK"))
     # Пытаемся найти DealReg по ID
     dealreg_data = await bitrix.get_dealreg_by_id(dealreg_number)
-
     if not dealreg_data or not dealreg_data.get('result'):
+        await temp_message.delete()
         await message.answer("DealReg с таким номером не найден. ❌")
         await state.clear()
         return
-
     dealreg_info = dealreg_data['result'].get('item', {})
-    
+
     # Если пользователь не админ - проверяем доступ
     if not is_admin:
         has_access = await check_dealreg_access(user_email, dealreg_info, bitrix)
         if not has_access:
+            await temp_message.delete()
             # Получаем email партнера для информационного сообщения
             partner_email = await get_partner_email_from_dealreg(dealreg_info, bitrix)
             await message.answer(
@@ -182,21 +192,18 @@ async def process_dealreg_number(message: Message, state: FSMContext):
             await state.clear()
             return
 
-    # Если доступ есть (либо пользователь админ), продолжаем обработку...
+    # Получаем данные о DealReg
     dealreg_id = dealreg_info.get('id')
     dealreg_stage_id = dealreg_info.get('stageId')
     dealreg_previous_stage_id = dealreg_info.get('previousStageId')
     dealreg_company = dealreg_info.get('companyId')
     dealreg_created = dealreg_info.get('createdTime')
     dealreg_modified = dealreg_info.get('updatedTime')
-    contact_ids = dealreg_info.get('contactIds', [])
 
     # Получаем информацию о компании
     if dealreg_company:
         company_data = await bitrix.get_company_info(dealreg_company)
-        company_name = company_data.get('result', {}).get(
-            'TITLE', 'Неизвестно'
-            ) if company_data else 'Неизвестно'
+        company_name = company_data.get('result', {}).get('TITLE', 'Неизвестно') if company_data else 'Неизвестно'
     else:
         company_name = 'Неизвестно'
 
@@ -213,9 +220,9 @@ async def process_dealreg_number(message: Message, state: FSMContext):
         'DT183_37:FAIL': 'Истёк(проигрыш)',
         'DT183_37:1': 'Подключения не требуется(проигрыш)',
         'DT183_37:UC_ENAKFX': 'Нет планов по переходу(проигрыш)',
-        'DT183_37:2': 'Дубль(проигрышь)',
+        'DT183_37:2': 'Дубль(проигрыш)',
         'DT183_37:3': 'Компания на другом партнёре(проигрыш)',
-        'DT183_37:6': 'ИНН и компания не совбадают(проигрыш)',
+        'DT183_37:6': 'ИНН и компания не совпадают(проигрыш)',
         'DT183_37:7': 'Квалификация(проигрыш)',
         'DT183_37:10': 'Не целевой(проигрыш)',
         'DT183_37:11': 'Не ЛПР/ГПР(проигрыш)',
@@ -230,17 +237,14 @@ async def process_dealreg_number(message: Message, state: FSMContext):
 
     # Получаем название стадии
     stage_name = stages.get(dealreg_stage_id, 'Неизвестно')
-    previous_stage_name = stages.get(
-        dealreg_previous_stage_id, 'Неизвестно'
-        ) if dealreg_previous_stage_id else 'Неизвестно'
+    previous_stage_name = stages.get(dealreg_previous_stage_id, 'Неизвестно') if dealreg_previous_stage_id else 'Неизвестно'
 
     # Получаем информацию об ответственном за сделку
     responsible_name = 'Не назначен менеджер'
     responsible_email = 'Неизвестно'
     responsible_telegram = 'Неизвестно'
     responsible_position = 'Неизвестно'
-    
-    # Ответственный за сделку
+
     deal_responsible_for_deal_id = dealreg_info.get('ufCrm27_1731395822')
     if deal_responsible_for_deal_id:
         responsible_data = await bitrix.get_user(deal_responsible_for_deal_id)
@@ -256,7 +260,7 @@ async def process_dealreg_number(message: Message, state: FSMContext):
             responsible_info = responsible_data.get('result', [{}])[0]
             responsible_name = f"{responsible_info.get('NAME', 'Неизвестно')} {responsible_info.get('LAST_NAME', 'Неизвестно')}"
             responsible_email = responsible_info.get('EMAIL', 'Неизвестно')
-            responsible_telegram = responsible_info.get('UF_USR_1665651064433', 'Неизвестno')
+            responsible_telegram = responsible_info.get('UF_USR_1665651064433', 'Неизвестно')
             responsible_position = responsible_info.get('WORK_POSITION', 'Неизвестно')
 
     # Получаем информацию о касаниях с клиентом из сделки
@@ -267,7 +271,6 @@ async def process_dealreg_number(message: Message, state: FSMContext):
         if deal_touches_data and deal_touches_data.get('result'):
             for touch in deal_touches_data['result']:
                 touch_info = f"{touch.get('CREATED')}: {touch.get('COMMENT')}"
-                # Удаляем HTML-теги
                 touch_info = re.sub(r'<[^>]+>', '', touch_info)
                 touch_info = re.sub(r'\[/?[A-Z]+\]', '', touch_info)
                 deal_touches_info.append(touch_info)
@@ -278,7 +281,7 @@ async def process_dealreg_number(message: Message, state: FSMContext):
         modified_date = datetime.fromisoformat(dealreg_modified).strftime('%d.%m.%Y %H:%M') if dealreg_modified else 'Неизвестно'
     except (TypeError, ValueError) as e:
         logger.error(f"Error parsing dates: {e}")
-        created_date = 'Неизвестno'
+        created_date = 'Неизвестно'
         modified_date = 'Неизвестно'
 
     # Добавляем пометку для админа
@@ -306,17 +309,99 @@ async def process_dealreg_number(message: Message, state: FSMContext):
 
     # Добавляем информацию о касаниях с клиентом из сделки
     if deal_touches_info:
-        dealreg_message += "\n<b>Касания с клиентом (Сделка):</b>\n" + "\n".join(deal_touches_info[:5])
+        dealreg_message += "\n<b>Комментарии в сущности (Сделка):</b>\n" + "\n".join(deal_touches_info[:5])
     else:
-        dealreg_message += "\n<b>Касания с клиентом (Сделка):</b> Нет данных."
+        dealreg_message += "\n<b>Комментарии в сущности (Сделка):</b> Нет данных."
 
-    # Разбиваем сообщение на части, если оно слишком длинное
-    max_length = 4096
-    if len(dealreg_message) > max_length:
-        messages = [dealreg_message[i:i + max_length] for i in range(0, len(dealreg_message), max_length)]
-        for msg in messages:
-            await message.answer(msg, parse_mode=ParseMode.HTML)
-    else:
-        await message.answer(dealreg_message, parse_mode=ParseMode.HTML)
+    # Создаем инлайн-кнопку для просмотра касаний, если есть deal_id
+    keyboard = None
+    if deal_id:
+        keyboard = InlineKeyboardMarkup(inline_keyboard=[
+            [InlineKeyboardButton(
+                text="📋 Показать касания с клиентом",
+                callback_data=f"show_touches_{deal_id}"
+            )]
+        ])
+
+    # Удаляем временное сообщение
+    await temp_message.delete()
+
+    # Отправляем основное сообщение
+    await message.answer(dealreg_message, parse_mode=ParseMode.HTML, reply_markup=keyboard)
 
     await state.clear()
+
+
+
+
+@router.callback_query(F.data.startswith("show_touches_"))
+async def show_client_touches(callback: CallbackQuery, state: FSMContext):
+    try:
+        deal_id = callback.data.replace("show_touches_", "")
+        await callback.answer("Загружаем касания...")
+        
+        bitrix = BitrixAPI(os.getenv("BITRIX_WEBHOOK"))
+        touches_data = await bitrix.get_deal_client_touches(deal_id)
+        
+        if not touches_data or not touches_data.get('result') or not touches_data['result'].get('items'):
+            await callback.message.answer("❌ Касания с клиентом не найдены")
+            return
+        
+        touches = touches_data['result']['items']
+        touches_info = []
+        
+        for touch in touches:
+            touch_text = touch.get('ufCrm45_1663423811', '')
+            if touch_text:
+                # Очищаем текст от HTML и форматируем
+                touch_text = re.sub(r'<[^>]+>', '', touch_text)
+                touch_text = re.sub(r'\[/?[A-Z]+\]', '', touch_text)
+                
+                created_time = touch.get('createdTime', '')
+                if created_time:
+                    try:
+                        created_date = datetime.fromisoformat(created_time).strftime('%d.%m.%Y %H:%M')
+                        touch_info = f"📅 {created_date}:\n{touch_text}\n"
+                    except:
+                        touch_info = f"📅 Неизвестная дата:\n{touch_text}\n"
+                else:
+                    touch_info = f"{touch_text}\n"
+                
+                touches_info.append(touch_info)
+        
+        if touches_info:
+            # Разбиваем на сообщения по 4096 символов
+            full_message = "📋 <b>Касания с клиентом:</b>\n\n" + "\n".join(touches_info)
+            
+            if len(full_message) > 4096:
+                parts = []
+                current_part = ""
+                
+                for touch in touches_info:
+                    if len(current_part) + len(touch) > 4000:
+                        parts.append(current_part)
+                        current_part = touch
+                    else:
+                        current_part += touch
+                
+                if current_part:
+                    parts.append(current_part)
+                
+                for i, part in enumerate(parts, 1):
+                    part_message = f"📋 <b>Касания с клиентом (часть {i}):</b>\n\n{part}"
+                    await callback.message.answer(part_message, parse_mode=ParseMode.HTML)
+                    await asyncio.sleep(0.5)
+            else:
+                await callback.message.answer(full_message, parse_mode=ParseMode.HTML)
+        else:
+            await callback.message.answer("❌ Нет информации о касаниях")
+            
+    except Exception as e:
+        logger.error(f"Error showing touches: {e}")
+        await callback.message.answer("⚠️ Произошла ошибка при загрузке касаний")
+
+# Добавляем обработчик в роутер
+@router.callback_query(F.data == "load_more_touches")
+async def load_more_touches(callback: CallbackQuery, state: FSMContext):
+    # Можно реализовать пагинацию, если касаний очень много
+    await callback.answer("Функция пагинации в разработке")
