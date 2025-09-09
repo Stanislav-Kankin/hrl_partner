@@ -348,7 +348,7 @@ async def process_dealreg_number(message: Message, state: FSMContext):
         keyboard = InlineKeyboardMarkup(inline_keyboard=[
             [InlineKeyboardButton(
                 text="📋 Показать касания с клиентом",
-                callback_data=f"show_touches_{deal_id}"
+                callback_data=f"show_touches_{deal_id}_{dealreg_id}"
             )]
         ])
 
@@ -383,41 +383,54 @@ async def show_client_touches(callback: CallbackQuery, state: FSMContext):
 
         for touch in touches:
             touch_text = touch.get('ufCrm45_1663423811', '')
-            if touch_text:
-                # Очищаем текст от HTML и форматируем
-                touch_text = re.sub(r'<[^>]+>', '', touch_text)
-                touch_text = re.sub(r'\[/?[A-Z]+\]', '', touch_text)
+            if not touch_text:
+                continue
 
-                created_time = touch.get('createdTime', '')
-                if created_time:
-                    try:
-                        created_date = datetime.fromisoformat(created_time).strftime('%d.%m.%Y %H:%M')
-                        touch_info = f"📅 {created_date}:\n{touch_text}\n"
-                    except:
-                        touch_info = f"📅 Неизвестная дата:\n{touch_text}\n"
-                else:
-                    touch_info = f"{touch_text}\n"
+            # Очищаем текст от HTML
+            touch_text = re.sub(r'<[^>]+>', '', touch_text)
+            touch_text = re.sub(r'\[/?[A-Z]+\]', '', touch_text)
 
-                touches_info.append(touch_info)
+            # Получаем ID ответственного пользователя
+            assigned_by_id = touch.get('assignedById')
+
+            # Получаем информацию об ответственном пользователе
+            user_data = await bitrix.get_user(assigned_by_id)
+            responsible_name = "Неизвестно"
+            responsible_email = "Неизвестно"
+            responsible_telegram = "Неизвестно"
+
+            if user_data and user_data.get('result'):
+                user_info = user_data['result'][0]
+                responsible_name = f"{user_info.get('NAME', 'Неизвестно')} {user_info.get('LAST_NAME', 'Неизвестно')}"
+                responsible_email = user_info.get('EMAIL', 'Неизвестно')
+                responsible_telegram = user_info.get('UF_USR_1665651064433', 'Неизвестно')
+
+            # Получаем дату создания касания
+            created_time = touch.get('createdTime', '')
+            if created_time:
+                try:
+                    created_date = datetime.fromisoformat(created_time).strftime('%d.%m.%Y %H:%M')
+                    touch_info = f"📅 <b>{created_date}</b>\n👤 Ответственный: {responsible_name}\n📧 Email: <code>{responsible_email}</code>\n📞 Telegram: <code>{responsible_telegram}</code>\n\n<b>Текст касания:</b>\n{touch_text}\n"
+                except:
+                    touch_info = f"📅 Неизвестная дата\n👤 Ответственный: {responsible_name}\n📧 Email: {responsible_email}\n📞 Telegram: {responsible_telegram}\n{touch_text}\n"
+            else:
+                touch_info = f"👤 Ответственный: {responsible_name}\n📧 Email: {responsible_email}\n📞 Telegram: {responsible_telegram}\n{touch_text}\n"
+
+            touches_info.append(touch_info)
 
         if touches_info:
-            # Разбиваем на сообщения по 4096 символов
             full_message = "📋 <b>Касания с клиентом:</b>\n\n" + "\n".join(touches_info)
-
             if len(full_message) > 4096:
                 parts = []
                 current_part = ""
-
                 for touch in touches_info:
                     if len(current_part) + len(touch) > 4000:
                         parts.append(current_part)
                         current_part = touch
                     else:
                         current_part += touch
-
                 if current_part:
                     parts.append(current_part)
-
                 for i, part in enumerate(parts, 1):
                     part_message = f"📋 <b>Касания с клиентом (часть {i}):</b>\n\n{part}"
                     await callback.message.answer(part_message, parse_mode=ParseMode.HTML)
