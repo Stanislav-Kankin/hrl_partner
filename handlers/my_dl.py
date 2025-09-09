@@ -68,8 +68,11 @@ async def get_partner_email_from_dealreg(
 
     # Ищем email в пользовательских полях
     for field_name, field_value in contact_info.items():
-        if field_name.startswith('UF_') and field_value and isinstance(field_value, str) and '@' in field_value:
-            if re.match(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$', field_value):
+        if field_name.startswith(
+            'UF_') and field_value and isinstance(
+                field_value, str) and '@' in field_value:
+            if re.match(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$',
+                        field_value):
                 logger.info(f"Found partner email in custom field {field_name}: {field_value}")
                 return field_value
 
@@ -129,7 +132,8 @@ async def check_dealreg_access(
                     return True
 
         logger.warning(
-            "Access denied: User is neither partner, nor creator, nor responsible"
+            "Access denied: User is neither partner, "
+            "nor creator, nor responsible"
             )
         return False
 
@@ -256,8 +260,11 @@ async def process_dealreg_number(message: Message, state: FSMContext):
     }
 
     # Получаем название стадии
-    stage_name = stages.get(dealreg_stage_id, 'Неизвестно')
-    previous_stage_name = stages.get(dealreg_previous_stage_id, 'Неизвестно') if dealreg_previous_stage_id else 'Неизвестно'
+    stage_name = stages.get(
+        dealreg_stage_id, 'Неизвестно')
+    previous_stage_name = stages.get(
+        dealreg_previous_stage_id, 'Неизвестно'
+        ) if dealreg_previous_stage_id else 'Неизвестно'
 
     # Получаем информацию об ответственном за сделку
     responsible_name = 'Не назначен менеджер'
@@ -306,8 +313,12 @@ async def process_dealreg_number(message: Message, state: FSMContext):
 
     # Форматируем даты
     try:
-        created_date = datetime.fromisoformat(dealreg_created).strftime('%d.%m.%Y %H:%M') if dealreg_created else 'Неизвестно'
-        modified_date = datetime.fromisoformat(dealreg_modified).strftime('%d.%m.%Y %H:%M') if dealreg_modified else 'Неизвестно'
+        created_date = datetime.fromisoformat(
+            dealreg_created).strftime(
+                '%d.%m.%Y %H:%M') if dealreg_created else 'Неизвестно'
+        modified_date = datetime.fromisoformat(
+            dealreg_modified).strftime(
+                '%d.%m.%Y %H:%M') if dealreg_modified else 'Неизвестно'
     except (TypeError, ValueError) as e:
         logger.error(f"Error parsing dates: {e}")
         created_date = 'Неизвестно'
@@ -447,16 +458,24 @@ async def show_client_touches(callback: CallbackQuery, state: FSMContext):
 
                 for i, part in enumerate(parts, 1):
                     part_message = f"📋 <b>Касания с клиентом (часть {i}):</b>\n\n{part}"
-                    await callback.message.answer(part_message, parse_mode=ParseMode.HTML)
+                    await callback.message.answer(
+                        part_message,
+                        parse_mode=ParseMode.HTML
+                        )
                     await asyncio.sleep(0.5)
             else:
-                await callback.message.answer(full_message, parse_mode=ParseMode.HTML)
+                await callback.message.answer(
+                    full_message,
+                    parse_mode=ParseMode.HTML
+                    )
         else:
             await callback.message.answer("❌ Нет информации о касаниях")
 
     except Exception as e:
         logger.error(f"Error showing touches: {e}")
-        await callback.message.answer("⚠️ Произошла ошибка при загрузке касаний")
+        await callback.message.answer(
+            "⚠️ Произошла ошибка при загрузке касаний"
+            )
 
 
 # Добавляем обработчик в роутер
