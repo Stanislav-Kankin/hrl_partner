@@ -23,21 +23,24 @@ else:
             "last_name": "Канкин",
             "email": "skankin@hr-link.ru",
             "phone_num": "89898553407",
-            "allowed_partners": ["НН"]
+            "allowed_partners": ["НН"],
+            "role": "partner"
         },
         "Иван Иванов": {
             "name": "Иван",
             "last_name": "Иванов",
             "email": "ivan@example.com",
             "phone_num": "89221234567",
-            "allowed_partners": ["БФТ"]
+            "allowed_partners": ["БФТ"],
+            "role": "partner"
         },
         "admin admin": {
             "name": "admin",
             "last_name": "admin",
             "email": "admin",
             "phone_num": "1",
-            "allowed_partners": ["НН", "СБЕР РЕШЕНИЯ", "БФТ", "МТС"]
+            "allowed_partners": ["НН", "СБЕР РЕШЕНИЯ", "БФТ", "МТС"],
+            "role": "partner"
         },
     }
 

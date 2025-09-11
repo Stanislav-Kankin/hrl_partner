@@ -25,6 +25,12 @@ async def dl_partner_command(message: Message):
         )
         return
 
+    # Проверяем роль
+    if user_data.get("role") == "observer":
+        await message.answer(
+            "❌ У вас нет прав на подачу заявок. Вы наблюдатель.")
+        return
+
     # Получаем доступные ссылки для пользователя
     allowed_partners = user_data.get("allowed_partners", [])
     if not allowed_partners:

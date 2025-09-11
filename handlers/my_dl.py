@@ -80,30 +80,37 @@ async def get_partner_email_from_dealreg(
     return 'Неизвестно'
 
 
-async def check_dealreg_access(
-        user_email: str, dealreg_info: dict, bitrix: BitrixAPI) -> bool:
+async def check_dealreg_access(user_email: str, dealreg_info: dict,
+                               bitrix: BitrixAPI) -> bool:
     """
-    Проверяет доступ пользователя к DealReg по email
-    партнера или по создателю/ответственному.
+    Проверяет доступ пользователя к DealReg по email партнёра,
+    создателю/ответственному или роли (наблюдатель).
     """
-    logger.info(f"Checking access for user: {user_email}")
+    logger.info(f"Проверка доступа для пользователя: {user_email}")
 
     # 1. Админ всегда имеет доступ
     if user_email.lower() == "admin":
-        logger.info("Access granted: User is admin")
+        logger.info("Доступ разрешен: Пользователь — админ")
         return True
 
-    # 2. Получаем email партнёра
-    partner_email = await get_partner_email_from_dealreg(dealreg_info, bitrix)
-    logger.info(f"Partner email from DealReg: {partner_email}")
+    # 2. Проверяем, является ли пользователь наблюдателем
+    for user in USERS.values():
+        if user.get("email") == user_email and user.get("role") == "observer":
+            logger.info(
+                f"Доступ разрешен: Пользователь {user_email} — наблюдатель")
+            return True
 
-    # 3. Если email партнёра не найден, проверяем,
-    # является ли пользователь создателем/ответственным
+    # 3. Получаем email партнёра из DealReg
+    partner_email = await get_partner_email_from_dealreg(dealreg_info, bitrix)
+    logger.info(f"Email партнёра из DealReg: {partner_email}")
+
+    # 4. Если email партнёра не найден, проверяем,
+    # является ли пользователь создателем или ответственным
     if partner_email == 'Неизвестно':
         logger.info(
             "Email партнёра неизвестен. "
-            "Проверяю, является ли пользователь создателем или ответственным."
-            )
+            "Проверяем, является ли пользователь "
+            "создателем или ответственным.")
 
         # Проверяем, является ли пользователь создателем DealReg
         created_by_id = dealreg_info.get('createdById')
@@ -111,11 +118,9 @@ async def check_dealreg_access(
             created_by_data = await bitrix.get_user(created_by_id)
             if created_by_data and created_by_data.get('result'):
                 created_by_email = created_by_data['result'][0].get('EMAIL', '').lower()
-                logger.info(f"DealReg creator email: {created_by_email}")
+                logger.info(f"Email создателя DealReg: {created_by_email}")
                 if created_by_email == user_email.lower():
-                    logger.info(
-                        "Access granted: User is the creator of DealReg"
-                        )
+                    logger.info("Доступ разрешен: Пользователь — создатель DealReg")
                     return True
 
         # Проверяем, является ли пользователь ответственным за DealReg
@@ -123,31 +128,32 @@ async def check_dealreg_access(
         if assigned_by_id:
             assigned_by_data = await bitrix.get_user(assigned_by_id)
             if assigned_by_data and assigned_by_data.get('result'):
-                assigned_by_email = assigned_by_data[
-                    'result'][0].get('EMAIL', '').lower()
-                logger.info(f"DealReg responsible email: {assigned_by_email}")
+                assigned_by_email = assigned_by_data['result'][0].get(
+                    'EMAIL', '').lower()
+                logger.info(
+                    f"Email ответственного за DealReg: {assigned_by_email}"
+                    )
                 if assigned_by_email == user_email.lower():
-                    logger.info(
-                        "Access granted: User is responsible for DealReg")
+                    logger.info("Доступ разрешен: Пользователь — ответственный за DealReg")
                     return True
 
         logger.warning(
-            "Access denied: User is neither partner, "
-            "nor creator, nor responsible"
+            "Доступ запрещен: Пользователь не является "
+            "партнёром, создателем или ответственным"
             )
         return False
 
-    # 4. Сравниваем email пользователя с email партнёра
+    # 5. Сравниваем email пользователя с email партнёра
     access_granted = user_email.lower() == partner_email.lower() if isinstance(
         partner_email, str) else False
-
     if access_granted:
         logger.info(
-            f"Access granted: User email {user_email} matches partner email {
-                partner_email}")
+            f"Доступ разрешен: Email пользователя {
+                user_email} совпадает с email партнёра {partner_email}")
     else:
-        logger.warning(f"Access denied: User email {
-            user_email} != partner email {partner_email}")
+        logger.warning(
+            f"Доступ запрещен: Email пользователя {
+                user_email} не совпадает с email партнёра {partner_email}")
 
     return access_granted
 
