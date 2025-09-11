@@ -427,7 +427,7 @@ async def show_client_touches(callback: CallbackQuery, state: FSMContext):
                     touch_info = (
                         f"📅 <b>{created_date}</b>\n"
                         f"👤 Ответственный: {responsible_name}\n"
-                        f"📧 Email: <code>{responsible_email}</code>\n\n"
+                        f"📧 Email: <code>{responsible_email}</code>\n"
                         f"<b>Текст касания:</b>\n{touch_text}\n"
                     )
                 except Exception:
