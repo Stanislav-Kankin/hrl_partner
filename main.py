@@ -1,4 +1,5 @@
 import os
+import asyncio
 from aiogram import Bot, Dispatcher
 from aiogram.enums import ParseMode
 from aiogram.fsm.storage.memory import MemoryStorage
@@ -32,5 +33,5 @@ async def main():
 
 
 if __name__ == "__main__":
-    import asyncio
+
     asyncio.run(main())
