@@ -554,46 +554,36 @@ async def save_edit_user(message: Message, state: FSMContext):
         await message.answer("❌ Пользователь не найден.")
         await state.clear()
         return
-
     updated_data = await state.get_data()
     old_user_data = USERS[user_name]
-
+    # Проверяем наличие ключа 'role' в old_user_data
+    old_role = old_user_data.get("role", "partner")  # Значение по умолчанию: 'partner'
     # Формируем новое имя пользователя
-    new_full_name = f"{
-        updated_data.get(
-            'new_name', old_user_data['name'])} {
-                updated_data.get('new_last_name', old_user_data['last_name'])}"
-
+    new_full_name = f"{updated_data.get('new_name', old_user_data['name'])} {updated_data.get('new_last_name', old_user_data['last_name'])}"
     # Если имя изменилось, обновляем ключ в словаре
     if new_full_name != user_name:
         USERS[new_full_name] = USERS.pop(user_name)
-
     # Обновляем данные пользователя
     USERS[new_full_name].update({
         "name": updated_data.get("new_name", old_user_data["name"]),
         "last_name": updated_data.get("new_last_name", old_user_data["last_name"]),
         "email": updated_data.get("new_email", old_user_data["email"]),
         "phone_num": updated_data.get("new_phone", old_user_data["phone_num"]),
-        "role": updated_data.get("new_role", old_user_data["role"]),
+        "role": updated_data.get("new_role", old_role),  # Используем old_role
     })
-
     # Если роль "партнёр", обновляем список партнёров
-    if updated_data.get("new_role", old_user_data["role"]) == "partner":
+    current_role = updated_data.get("new_role", old_role)
+    if current_role == "partner":
         if state_data.get("waiting_for_edit_partners"):
             partners = [partner.strip() for partner in message.text.split(",")]
             USERS[new_full_name]["allowed_partners"] = partners
         else:
-            USERS[new_full_name]["allowed_partners"] = old_user_data.get(
-                "allowed_partners", [])
+            USERS[new_full_name]["allowed_partners"] = old_user_data.get("allowed_partners", [])
     else:
         USERS[new_full_name]["allowed_partners"] = []
-
     save_users()
-    log_admin_action(message.from_user.id, "edit_user", f"Edited user: {
-        new_full_name}")
-
-    await message.answer(
-        f"✅ Пользователь {new_full_name} успешно отредактирован!")
+    log_admin_action(message.from_user.id, "edit_user", f"Edited user: {new_full_name}")
+    await message.answer(f"✅ Пользователь {new_full_name} успешно отредактирован!")
     await state.clear()
 
 
