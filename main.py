@@ -25,7 +25,7 @@ dp = Dispatcher(storage=storage)
 dp.include_router(start.router)
 dp.include_router(dl_partner.router)
 dp.include_router(my_dl.router)
-dp.include_router(admin.router)  # Добавляем роутер для админских команд
+dp.include_router(admin.router)
 
 
 async def main():
