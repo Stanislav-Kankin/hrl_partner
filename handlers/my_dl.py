@@ -67,40 +67,51 @@ async def check_dealreg_access(user_email: str, dealreg_info: dict, bitrix: Bitr
     if user_email.lower() == "admin":
         logger.info("Доступ разрешен: Пользователь — админ")
         return True
+
+    # Проверка на наблюдателя
     for user in USERS.values():
         if user.get("email") == user_email and user.get("role") == "observer":
             logger.info(f"Доступ разрешен: Пользователь {user_email} — наблюдатель")
             return True
+
+    # Получаем email основного партнера
     partner_email = await get_partner_email_from_dealreg(dealreg_info, bitrix)
-    logger.info(f"Email партнёра из DealReg: {partner_email}")
-    if partner_email == 'Неизвестно':
-        logger.info("Email партнёра неизвестен. Проверяем, является ли пользователь создателем или ответственным.")
-        created_by_id = dealreg_info.get('createdById')
-        if created_by_id:
-            created_by_data = await bitrix.get_user(created_by_id)
-            if created_by_data and created_by_data.get('result'):
-                created_by_email = created_by_data['result'][0].get('EMAIL', '').lower()
-                logger.info(f"Email создателя DealReg: {created_by_email}")
-                if created_by_email == user_email.lower():
-                    logger.info("Доступ разрешен: Пользователь — создатель DealReg")
-                    return True
-        assigned_by_id = dealreg_info.get('assignedById')
-        if assigned_by_id:
-            assigned_by_data = await bitrix.get_user(assigned_by_id)
-            if assigned_by_data and assigned_by_data.get('result'):
-                assigned_by_email = assigned_by_data['result'][0].get('EMAIL', '').lower()
-                logger.info(f"Email ответственного за DealReg: {assigned_by_email}")
-                if assigned_by_email == user_email.lower():
-                    logger.info("Доступ разрешен: Пользователь — ответственный за DealReg")
-                    return True
-        logger.warning("Доступ запрещен: Пользователь не является партнёром, создателем или ответственным")
-        return False
-    access_granted = user_email.lower() == partner_email.lower() if isinstance(partner_email, str) else False
-    if access_granted:
-        logger.info(f"Доступ разрешен: Email пользователя {user_email} совпадает с email партнёра {partner_email}")
-    else:
-        logger.warning(f"Доступ запрещен: Email пользователя {user_email} не совпадает с email партнёра {partner_email}")
-    return access_granted
+    logger.info(f"Email основного партнёра из DealReg: {partner_email}")
+
+    # Получаем email доп. менеджера из полей DealReg
+    additional_manager_email = dealreg_info.get("ufCrm27_1715848468", "").lower()
+    logger.info(f"Email доп. менеджера из DealReg: {additional_manager_email}")
+
+    # Проверяем, совпадает ли email пользователя с email основного партнера или доп. менеджера
+    if user_email.lower() == partner_email.lower():
+        logger.info(f"Доступ разрешен: Email пользователя {user_email} совпадает с email основного партнера {partner_email}")
+        return True
+    elif user_email.lower() == additional_manager_email:
+        logger.info(f"Доступ разрешен: Email пользователя {user_email} совпадает с email доп. менеджера {additional_manager_email}")
+        return True
+
+    # Проверка на создателя или ответственного (если не партнер)
+    created_by_id = dealreg_info.get("createdById")
+    if created_by_id:
+        created_by_data = await bitrix.get_user(created_by_id)
+        if created_by_data and created_by_data.get("result"):
+            created_by_email = created_by_data["result"][0].get("EMAIL", "").lower()
+            if created_by_email == user_email.lower():
+                logger.info("Доступ разрешен: Пользователь — создатель DealReg")
+                return True
+
+    assigned_by_id = dealreg_info.get("assignedById")
+    if assigned_by_id:
+        assigned_by_data = await bitrix.get_user(assigned_by_id)
+        if assigned_by_data and assigned_by_data.get("result"):
+            assigned_by_email = assigned_by_data["result"][0].get("EMAIL", "").lower()
+            if assigned_by_email == user_email.lower():
+                logger.info("Доступ разрешен: Пользователь — ответственный за DealReg")
+                return True
+
+    logger.warning(f"Доступ запрещен: Email пользователя {user_email} не совпадает ни с одним из ответственных")
+    return False
+
 
 
 @router.message(Command("my_dr"))
