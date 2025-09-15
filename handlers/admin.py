@@ -256,21 +256,19 @@ async def show_user_info(callback: CallbackQuery):
     await callback.answer()
 
 
-# Редактирование пользователя
 @router.callback_query(F.data.startswith("edit_user_"))
 async def edit_user_callback(callback: CallbackQuery, state: FSMContext):
     user_name = callback.data.replace("edit_user_", "")
     if user_name not in USERS:
         await callback.answer("Пользователь не найден.", show_alert=True)
         return
-
     await state.update_data(editing_user=user_name)
     user_data = USERS[user_name]
-
+    # Добавляем проверку на наличие ключа 'role'
+    role = user_data.get('role', 'partner')  # Значение по умолчанию: 'partner'
     keyboard = InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text="➡️ Далее", callback_data="edit_skip_name")]
     ])
-
     await callback.message.answer(
         f"📝 <b>Редактирование пользователя {user_name}</b>\n\n"
         f"📌 Текущие данные:\n"
@@ -278,7 +276,7 @@ async def edit_user_callback(callback: CallbackQuery, state: FSMContext):
         f"👤 Фамилия: {user_data['last_name']}\n"
         f"📧 Email: {user_data['email']}\n"
         f"📞 Телефон: {user_data['phone_num']}\n"
-        f"🔗 Роль: {user_data['role']}\n"
+        f"🔗 Роль: {role}\n"  # Используем переменную role
         f"🔗 Партнеры: {', '.join(user_data.get('allowed_partners', []))}\n\n"
         f"Введите <b>новое имя</b> или нажмите ➡️ Далее, чтобы оставить без изменений:",
         reply_markup=keyboard,
