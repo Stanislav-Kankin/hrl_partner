@@ -594,6 +594,7 @@ async def search_user_callback(callback: CallbackQuery, state: FSMContext):
     await state.set_state(AdminStates.waiting_for_search_query)
     await callback.answer()
 
+
 @router.message(AdminStates.waiting_for_search_query)
 async def process_search_query(message: Message, state: FSMContext):
     query = message.text.strip().lower()
@@ -728,4 +729,67 @@ async def show_user_info_from_search(callback: CallbackQuery):
         reply_markup=action_keyboard,
         parse_mode="HTML"
     )
+    await callback.answer()
+
+
+@router.callback_query(F.data.startswith("change_role_"))
+async def change_role_callback(callback: CallbackQuery, state: FSMContext):
+    user_name = callback.data.replace("change_role_", "")
+    if user_name not in USERS:
+        await callback.answer("Пользователь не найден.", show_alert=True)
+        return
+
+    # Сохраняем имя пользователя в state
+    await state.update_data(editing_user=user_name)
+
+    # Предлагаем выбрать новую роль
+    keyboard = InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text="👥 Партнёр", callback_data="set_role_partner")],
+        [InlineKeyboardButton(text="👀 Наблюдатель", callback_data="set_role_observer")],
+    ])
+
+    await callback.message.edit_text(
+        f"🔄 Выберите новую роль для пользователя <b>{user_name}</b>:",
+        reply_markup=keyboard,
+        parse_mode="HTML"
+    )
+    await state.set_state(AdminStates.waiting_for_change_role)
+    await callback.answer()
+
+
+@router.callback_query(F.data == "set_role_partner", AdminStates.waiting_for_change_role)
+async def set_role_partner_callback(callback: CallbackQuery, state: FSMContext):
+    state_data = await state.get_data()
+    user_name = state_data.get("editing_user")
+    if user_name not in USERS:
+        await callback.answer("Пользователь не найден.", show_alert=True)
+        return
+
+    # Обновляем роль пользователя
+    USERS[user_name]["role"] = "partner"
+    save_users()
+    log_admin_action(callback.from_user.id, "change_role", f"Changed role to 'partner' for user: {user_name}")
+
+    await callback.message.edit_text(f"✅ Роль пользователя {user_name} изменена на <b>Партнёр</b>.")
+    await state.clear()
+    await callback.answer()
+
+
+
+@router.callback_query(F.data == "set_role_observer", AdminStates.waiting_for_change_role)
+async def set_role_observer_callback(callback: CallbackQuery, state: FSMContext):
+    state_data = await state.get_data()
+    user_name = state_data.get("editing_user")
+    if user_name not in USERS:
+        await callback.answer("Пользователь не найден.", show_alert=True)
+        return
+
+    # Обновляем роль пользователя
+    USERS[user_name]["role"] = "observer"
+    USERS[user_name]["allowed_partners"] = []  # Наблюдатели не имеют партнеров
+    save_users()
+    log_admin_action(callback.from_user.id, "change_role", f"Changed role to 'observer' for user: {user_name}")
+
+    await callback.message.edit_text(f"✅ Роль пользователя {user_name} изменена на <b>Наблюдатель</b>.")
+    await state.clear()
     await callback.answer()
